@@ -1,0 +1,2310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AttriSense AI — HR Attrition Dashboard</title>
+  <meta name="description" content="Predictive Employee Attrition Intelligence Dashboard — LTTS Global Hackathon 2026"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #090d16;
+      --bg2: #0f172a;
+      --card: rgba(15, 23, 42, 0.55);
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --critical: #ef4444;
+      --high: #f97316;
+      --moderate: #eab308;
+      --low: #22c55e;
+      --text: #cbd5e1;
+      --muted: #64748b;
+      --glow: 0 10px 30px -10px rgba(99,102,241,0.35);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.04) 35%, #090d16 70%);
+      background-attachment: fixed;
+    }
+    
+    /* LOGIN SCREEN STYLE */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 480px;
+      background: rgba(15, 22, 41, 0.75);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 2.5rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 15px 45px rgba(99,102,241,0.2);
+      text-align: center;
+    }
+    .persona-btn {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      padding: 0.85rem 1.25rem;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.25s;
+      margin-bottom: 0.75rem;
+    }
+    .persona-btn:hover {
+      background: rgba(99,102,241,0.12);
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+    .persona-avatar {
+      font-size: 1.5rem;
+    }
+    .persona-name {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: #fff;
+    }
+    .persona-role {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.08));
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 0.75rem; }
+    .logo-icon {
+      font-size: 1.8rem;
+      filter: drop-shadow(0 0 8px rgba(99,102,241,0.7));
+      animation: pulse-glow 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%,100% { filter: drop-shadow(0 0 6px rgba(99,102,241,0.5)); }
+      50%      { filter: drop-shadow(0 0 14px rgba(99,102,241,0.9)); }
+    }
+    .logo-text h1 { font-size: 1.4rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+    .logo-text p  { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+    .tagline {
+      font-size: 0.78rem; font-style: italic; color: var(--accent2);
+      border: 1px solid rgba(99,102,241,0.3); border-radius: 20px;
+      padding: 0.3rem 0.85rem;
+      background: rgba(99,102,241,0.08);
+      display: inline-block;
+    }
+    .user-profile-header {
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .logout-btn {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      color: #f87171; border-radius: 8px; padding: 0.4rem 0.85rem;
+      font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.25s;
+    }
+    .logout-btn:hover {
+      background: rgba(239,68,68,0.22); color: #fff;
+    }
+
+    /* MAIN */
+    .main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+    
+    /* TABS */
+    .tab-container {
+      display: flex; gap: 0.75rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;
+      justify-content: flex-start; flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      border-radius: 20px; padding: 0.6rem 1.4rem; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.25s; font-family: 'Inter', sans-serif;
+    }
+    .tab-btn:hover { background: rgba(99,102,241,0.12); border-color: var(--accent); }
+    .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--glow); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .notif-badge {
+      background: var(--critical); color: #fff; font-size: 0.68rem; font-weight: 700;
+      padding: 0.1rem 0.45rem; border-radius: 10px; margin-left: 0.5rem;
+    }
+
+    /* KPI CARDS */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .kpi-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      transition: transform 0.3s, box-shadow 0.3s;
+      opacity: 0; animation: fadeUp 0.5s forwards;
+    }
+    .kpi-card:hover { transform: translateY(-4px); box-shadow: var(--glow); }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .kpi-card:nth-child(1) { animation-delay: 0.1s; }
+    .kpi-card:nth-child(2) { animation-delay: 0.2s; }
+    .kpi-card:nth-child(3) { animation-delay: 0.3s; }
+    .kpi-card:nth-child(4) { animation-delay: 0.4s; }
+    .kpi-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; }
+    .kpi-value { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+    .kpi-sub   { font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; }
+    .kpi-card.total .kpi-value { color: var(--accent2); }
+    .kpi-card.critical .kpi-value { color: var(--critical); }
+    .kpi-card.high .kpi-value    { color: var(--high); }
+    .kpi-card.safe .kpi-value    { color: var(--low); }
+    .kpi-ring {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 0.75rem;
+    }
+    .kpi-card.total    .kpi-ring { background: rgba(99,102,241,0.15); }
+    .kpi-card.critical .kpi-ring { background: rgba(239,68,68,0.15); }
+    .kpi-card.high     .kpi-ring { background: rgba(249,115,22,0.15); }
+    .kpi-card.safe     .kpi-ring { background: rgba(34,197,94,0.15); }
+
+    /* PULSE BADGES */
+    .pulse-badge {
+      display: inline-block; padding: 0.15rem 0.6rem;
+      border-radius: 20px; font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      text-align: center;
+    }
+    .badge-CRITICAL { background: rgba(239,68,68,0.2); color: var(--critical); border: 1px solid var(--critical); animation: badge-pulse 1.5s ease-in-out infinite; }
+    .badge-HIGH     { background: rgba(249,115,22,0.2); color: var(--high); border: 1px solid var(--high); }
+    .badge-MODERATE { background: rgba(234,179,8,0.2); color: var(--moderate); border: 1px solid var(--moderate); }
+    .badge-LOW      { background: rgba(34,197,94,0.2); color: var(--low); border: 1px solid var(--low); }
+    @keyframes badge-pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+      50%      { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+    }
+
+    /* SECTION LAYOUT */
+    .section-grid { display: grid; grid-template-columns: 1fr 360px; gap: 1.5rem; margin-bottom: 1.5rem; }
+    @media (max-width: 900px) { .section-grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--accent2); margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    /* DEPARTMENT HEATMAP */
+    .dept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
+    .dept-cell {
+      border-radius: 12px; padding: 1rem; text-align: center;
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: transform 0.25s, box-shadow 0.25s;
+      cursor: pointer;
+    }
+    .dept-cell:hover { transform: scale(1.04); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .dept-name  { font-size: 0.8rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+    .dept-score { font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1; }
+    .dept-count { font-size: 0.68rem; color: rgba(255,255,255,0.7); margin-top: 0.3rem; }
+
+    /* EMPLOYEE TABLE */
+    .table-wrap { overflow-x: auto; margin-top: 0.5rem; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; }
+    th {
+      text-align: left; padding: 1rem 1.25rem; color: var(--muted);
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
+      border-bottom: 2px solid var(--border); font-weight: 700;
+    }
+    td { padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); color: #cbd5e1; }
+    tr.emp-tr:hover td { background: rgba(99, 102, 241, 0.04) !important; color: #fff; }
+    tr.emp-tr { transition: all 0.2s ease; cursor: pointer; }
+    tr.emp-tr.row-highlighted td {
+      background: rgba(99, 102, 241, 0.15) !important;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.35);
+      color: #fff;
+    }
+    .risk-bar-wrap { display: flex; align-items: center; gap: 0.5rem; }
+    .risk-bar { height: 6px; border-radius: 3px; flex-shrink: 0; transition: width 1s ease; }
+    .risk-pct  { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+
+    /* EXPANDED ROW */
+    .exp-row td { padding: 1.25rem 1.5rem; background: rgba(99,102,241,0.05); }
+    .exp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.6rem; }
+    .exp-item { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 0.6rem 0.75rem; }
+    .exp-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .exp-val   { font-size: 0.85rem; font-weight: 600; margin-top: 0.2rem; }
+    .hidden { display: none; }
+
+    /* CHART */
+    .chart-wrap { position: relative; height: 260px; display: flex; align-items: center; justify-content: center; }
+
+    /* FOOTER */
+    .footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.75rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+
+    /* SCORE COLORS */
+    .score-CRITICAL { color: var(--critical); font-weight: 700; }
+    .score-HIGH     { color: var(--high); font-weight: 700; }
+    .score-MODERATE { color: var(--moderate); font-weight: 600; }
+    .score-LOW      { color: var(--low); font-weight: 600; }
+
+    /* FILTER BAR */
+    .filter-bar {
+      display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
+      margin-bottom: 1.25rem; padding: 1rem 1.25rem;
+      background: rgba(99,102,241,0.05); border-radius: 12px;
+      border: 1px solid rgba(99,102,241,0.15);
+    }
+    .filter-bar input, .filter-bar select {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 0.45rem 0.85rem;
+      font-size: 0.82rem; font-family: 'Inter', sans-serif;
+      outline: none; transition: border-color 0.2s;
+    }
+    .filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
+    .filter-bar input { min-width: 200px; }
+    .filter-bar select option { background: #1e293b; }
+    .filter-count {
+      margin-left: auto; font-size: 0.78rem; color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* PAGINATION */
+    .pagination {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.5rem; margin-top: 1.25rem; flex-wrap: wrap;
+    }
+    .page-btn {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 0.4rem 0.8rem;
+      font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .page-btn:hover:not(:disabled) { background: rgba(99,102,241,0.2); border-color: var(--accent); }
+    .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+    .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .page-info { font-size: 0.78rem; color: var(--muted); padding: 0 0.5rem; }
+
+    /* NOTIFICATIONS TIMELINE */
+    .notif-timeline { display: flex; flex-direction: column; gap: 1rem; }
+    .notif-item {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.25rem; display: flex; gap: 1.25rem; align-items: flex-start;
+      transition: transform 0.2s; position: relative;
+    }
+    .notif-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .notif-icon {
+      width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+    .notif-icon.ALARM { background: rgba(239,68,68,0.15); color: var(--critical); border: 1px solid var(--critical); }
+    .notif-icon.FORWARD { background: rgba(99,102,241,0.15); color: var(--accent2); border: 1px solid var(--accent); }
+    .notif-icon.MANAGER_ACTION { background: rgba(34,197,94,0.15); color: var(--low); border: 1px solid var(--low); }
+    .notif-icon.INFO { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border); }
+    .notif-body { flex-grow: 1; }
+    .notif-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+    .notif-sender { font-size: 0.85rem; font-weight: 700; color: #fff; }
+    .notif-time { font-size: 0.72rem; color: var(--muted); }
+    .notif-msg { font-size: 0.82rem; color: var(--text); line-height: 1.4; }
+    .notif-badge-item {
+      display: inline-block; font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.5rem;
+      border-radius: 12px; margin-left: 0.5rem; text-transform: uppercase;
+    }
+    .notif-badge-item.unread { background: rgba(239,68,68,0.2); color: var(--critical); border: 1px solid var(--critical); }
+    .notif-badge-item.read { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--border); }
+    .notif-notes {
+      margin-top: 0.75rem; padding: 0.65rem 0.75rem; background: rgba(255,255,255,0.02);
+      border-radius: 8px; border-left: 3px solid var(--accent); font-size: 0.78rem; color: var(--text);
+    }
+    .notif-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+    .notif-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+    }
+    .notif-btn:hover { background: rgba(99,102,241,0.15); border-color: var(--accent); }
+    .notif-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* AGENT REPORT STYLING */
+    .agent-report-box {
+      margin-top: 1.25rem;
+      padding: 1.75rem;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+      border-left: 4px solid var(--accent);
+      max-height: 650px;
+      overflow-y: auto;
+    }
+    .spinner {
+      display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite;
+      margin-right: 0.5rem; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* COLLABORATION CONTROL BOX */
+    .collab-box {
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem; margin-top: 1rem;
+    }
+    .collab-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent2); margin-bottom: 0.75rem; }
+  </style>
+</head>
+<body>
+
+<!-- 1. LOGIN SCREEN -->
+<div id="loginScreen" class="login-container">
+  <div class="login-card">
+    <div style="font-size:3rem;margin-bottom:0.75rem;animation:pulse-glow 2.5s infinite;">🧠</div>
+    <h2 style="font-size:1.65rem;font-weight:800;color:#fff;margin-bottom:0.3rem;letter-spacing:-0.01em;">AttriSense AI</h2>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:2rem;">Predictive Attrition Intelligence & Cross-Department Workspace</p>
+    
+    <div style="text-align:left;margin-bottom:1.5rem;">
+      <label class="flabel" style="margin-bottom:0.6rem">Select Corporate Persona to Proceed:</label>
+      
+      <!-- HR ADMIN -->
+      <div onclick="loginAs('Kavita Nair', 'HR_ADMIN', 'HR', '')" class="persona-btn">
+        <span class="persona-avatar">👩‍💼</span>
+        <div>
+          <div class="persona-name">Kavita Nair</div>
+          <div class="persona-role">HR Director (Role: HR Admin)</div>
+        </div>
+      </div>
+      
+      <!-- ANALYST -->
+      <div onclick="loginAs('Ashish Wagh', 'ANALYST', 'Data Science', '')" class="persona-btn">
+        <span class="persona-avatar">📊</span>
+        <div>
+          <div class="persona-name">Ashish Wagh</div>
+          <div class="persona-role">Attrition Risk Analyst (Role: Risk Analyst)</div>
+        </div>
+      </div>
+      
+      <!-- MANAGER -->
+      <div onclick="loginAs('Tarun Gupta', 'MANAGER', 'Engineering', '')" class="persona-btn">
+        <span class="persona-avatar">👨‍💻</span>
+        <div>
+          <div class="persona-name">Tarun Gupta</div>
+          <div class="persona-role">Engineering Lead (Role: Manager)</div>
+        </div>
+      </div>
+      
+      <!-- EMPLOYEE -->
+      <div onclick="loginAs('Arjun Sharma', 'EMPLOYEE', 'Engineering', 'EMP0001')" class="persona-btn">
+        <span class="persona-avatar">💻</span>
+        <div>
+          <div class="persona-name">Arjun Sharma</div>
+          <div class="persona-role">Senior Developer (Role: Employee - EMP0001)</div>
+        </div>
+      </div>
+    </div>
+    
+    <div style="font-size:0.68rem;color:var(--muted)">LTTS Global Hackathon 2026 Sandbox Login</div>
+  </div>
+</div>
+
+<!-- 2. MAIN APP CONTAINER -->
+<div id="appContainer" style="display:none">
+  
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      <div class="logo-text">
+        <h1>AttriSense AI</h1>
+        <p>Predictive Employee Attrition Intelligence Platform — LTTS Global Hackathon 2026</p>
+      </div>
+    </div>
+    <div class="tagline">"Predict Attrition Before It Happens."</div>
+    
+    <div class="user-profile-header">
+      <div style="text-align:right">
+        <div style="font-size:0.82rem;font-weight:700;color:#fff" id="userNameText">User</div>
+        <div style="font-size:0.68rem;color:var(--accent2)" id="userRoleText">Role</div>
+      </div>
+      <button onclick="logout()" class="logout-btn">Log Out ➔</button>
+    </div>
+  </header>
+
+  <!-- TAB NAVIGATION -->
+  <div class="main" style="padding-bottom:0; max-width: 1400px; margin: 0 auto;" id="navTabsRow">
+    <div class="tab-container">
+      <button id="tabBtn-analytics" class="tab-btn active" onclick="switchTab('analytics')">📊 Attrition Analytics & Risk Register</button>
+      <button id="tabBtn-managers" class="tab-btn" onclick="switchTab('managers')">👔 Manager Accountability</button>
+      <button id="tabBtn-notifications" class="tab-btn" onclick="switchTab('notifications')">🔔 Alert & Notification Center <span id="notifBadgeCount" class="notif-badge">0</span></button>
+      <button id="tabBtn-profile" class="tab-btn" onclick="switchTab('profile')" style="display:none">👤 Employee Profile Cockpit</button>
+    </div>
+  </div>
+
+  <main class="main" style="padding-top:0.5rem">
+
+    <!-- A. STANDARD DASHBOARD WORKSPACE -->
+    <div id="dashboardWorkspace">
+      <!-- TAB CONTENT 1: RISK ANALYTICS -->
+      <div id="tabContent-analytics" class="tab-content active">
+        <!-- KPI CARDS -->
+        <div class="kpi-grid" id="kpiGrid">
+          <div class="kpi-card total">
+            <div class="kpi-ring">👥</div>
+            <div class="kpi-label">Total Employees</div>
+            <div class="kpi-value" id="kpi-total">—</div>
+            <div class="kpi-sub">Monitored in real-time</div>
+          </div>
+          <div class="kpi-card critical">
+            <div class="kpi-ring">🔴</div>
+            <div class="kpi-label">Critical Risk</div>
+            <div class="kpi-value" id="kpi-critical">—</div>
+            <div class="kpi-sub">Immediate action required</div>
+          </div>
+          <div class="kpi-card high">
+            <div class="kpi-ring">🟠</div>
+            <div class="kpi-label">High Risk</div>
+            <div class="kpi-value" id="kpi-high">—</div>
+            <div class="kpi-sub">Manager intervention needed</div>
+          </div>
+          <div class="kpi-card safe">
+            <div class="kpi-ring">🟢</div>
+            <div class="kpi-label">Stable (Mod + Low)</div>
+            <div class="kpi-value" id="kpi-safe">—</div>
+            <div class="kpi-sub">Monitor quarterly</div>
+          </div>
+        </div>
+
+        <!-- DEPT HEATMAP + CHART -->
+        <div class="section-grid" id="aggregateChartsSection">
+          <div class="card">
+            <div class="card-title">🗺️ Department Risk Heatmap</div>
+            <div class="dept-grid" id="deptGrid">Loading...</div>
+          </div>
+          <div class="card">
+            <div class="card-title">📊 Risk Distribution</div>
+            <div class="chart-wrap"><canvas id="riskChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- EMPLOYEE RISK TABLE -->
+        <div class="card">
+          <div class="card-title" id="tableTitleText">👤 Employee Attrition Risk Register</div>
+          <!-- FILTER BAR -->
+          <div class="filter-bar">
+            <input type="text" id="searchInput" placeholder="🔍  Search by name or ID..." oninput="applyFilters()">
+            <select id="levelFilter" onchange="applyFilters()">
+              <option value="ALL">All Risk Levels</option>
+              <option value="CRITICAL">🔴 Critical</option>
+              <option value="HIGH">🟠 High</option>
+              <option value="MODERATE">🟡 Moderate</option>
+              <option value="LOW">🟢 Low</option>
+            </select>
+            <select id="deptFilter" onchange="applyFilters()">
+              <option value="ALL">All Departments</option>
+            </select>
+            <span class="filter-count" id="filterCount">— employees</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Name</th><th>Dept</th><th>Direct Manager</th><th>Risk Score</th>
+                  <th>Level</th><th>Top Driver</th><th>Mood</th>
+                </tr>
+              </thead>
+              <tbody id="empTableBody">
+                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">Loading employee data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- PAGINATION -->
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT 2: MANAGER ACCOUNTABILITY -->
+      <div id="tabContent-managers" class="tab-content">
+        <div class="card">
+          <div class="card-title">👔 Manager Attrition Auditing Leaderboard</div>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:1.5rem; line-height:1.4">
+            This view aggregates risk telemetry by direct line manager. Teams showing multiple critical or high flight risks are flagged automatically.
+            HR can audit specific managers (like <strong>Tarun Gupta</strong> in Engineering or <strong>Amit Verma</strong> in Operations) who show high turnover leakage patterns.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Manager Name</th><th>Department</th><th>Team Size</th><th>Avg Risk Score</th>
+                  <th>🔴 Critical</th><th>🟠 High</th><th>🟡 Mod</th><th>🟢 Low</th><th>Team Status</th>
+                </tr>
+              </thead>
+              <tbody id="managerTableBody">
+                <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">Loading manager analytics...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT 3: ALERT & NOTIFICATION CENTER -->
+      <div id="tabContent-notifications" class="tab-content">
+        <div class="card">
+          <div class="card-title">🔔 Cross-Department Alert Timeline & Workflows</div>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:1.5rem; line-height:1.4">
+            AttriSense AI enables structured communications between <strong>Analysts</strong>, <strong>HR</strong>, and <strong>Managers</strong>.
+            When an employee's risk score rises, the Analyst is alerted. They can review and forward it to HR.
+            HR discusses the case and alerts the Manager. When the Manager logs a retention action, all parties are updated in real-time.
+          </p>
+          
+          <div class="notif-timeline" id="notifTimeline">
+            <div style="text-align:center;color:var(--muted);padding:2rem">Loading timeline alerts...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT 4: EMPLOYEE PROFILE COCKPIT (DYNAMIC DETAIL VIEW) -->
+      <div id="tabContent-profile" class="tab-content">
+        <div class="card">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+            <button onclick="switchTab('analytics')" class="notif-btn" style="padding:0.5rem 1.25rem;">
+              ← Back to Risk Register
+            </button>
+            <div style="font-size:0.8rem; color:var(--muted)">AttriSense AI Employee Ledger View</div>
+          </div>
+
+          <!-- Demographics & Risk Header Card -->
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:16px; padding:1.5rem; display:flex; gap:2rem; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <div style="display:flex; align-items:center; gap:1.25rem;">
+              <div style="width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:2rem; color:#fff; box-shadow: 0 4px 15px rgba(99,102,241,0.4);" id="prof-avatar">👤</div>
+              <div>
+                <h2 style="font-size:1.4rem; font-weight:800; color:#fff" id="prof-name">—</h2>
+                <div style="font-size:0.83rem; color:var(--muted); margin-top:2px;">
+                  ID: <span id="prof-id" style="color:var(--accent2); font-weight:700">—</span> | 
+                  Dept: <strong style="color:#fff" id="prof-dept">—</strong> | 
+                  Manager: <strong style="color:#fff" id="prof-manager">—</strong>
+                </div>
+              </div>
+            </div>
+            
+            <div style="display:flex; gap:1rem; text-align:center;">
+              <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:0.75rem 1.25rem; border-radius:12px;">
+                <div style="font-size:0.65rem; text-transform:uppercase; color:var(--muted); margin-bottom:0.25rem">Tenure</div>
+                <div style="font-size:1.1rem; font-weight:800; color:#fff" id="prof-tenure">— yrs</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:0.75rem 1.25rem; border-radius:12px;">
+                <div style="font-size:0.65rem; text-transform:uppercase; color:var(--muted); margin-bottom:0.25rem">Risk Level</div>
+                <span id="prof-riskBadge" class="pulse-badge badge-LOW">LOW</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:0.75rem 1.25rem; border-radius:12px;">
+                <div style="font-size:0.65rem; text-transform:uppercase; color:var(--muted); margin-bottom:0.25rem">Risk Score</div>
+                <div style="font-size:1.1rem; font-weight:800; color:var(--critical)" id="prof-riskScore">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parameter grid & Diagnostics -->
+          <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:1.5rem; margin-bottom:1.5rem;" id="prof-diagnosticsRow">
+            <!-- Parameters Grid -->
+            <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:16px; padding:1.5rem;">
+              <h3 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; color:var(--accent2); margin-bottom:1rem; display:flex; align-items:center; gap:0.4rem;">📊 Employee telemetry variables</h3>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;" id="prof-paramsGrid">
+                <!-- Filled dynamically by JS -->
+              </div>
+            </div>
+
+            <!-- Interventions Logger & quick controls -->
+            <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:16px; padding:1.5rem; display:flex; flex-direction:column; gap:1rem;">
+              <h3 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; color:var(--accent2); margin-bottom:0.25rem; display:flex; align-items:center; gap:0.4rem;">⚡ Actions logger & intervention</h3>
+              
+              <div>
+                <label class="flabel" style="margin-bottom:0.4rem">Select Intervention Action Logged by Manager:</label>
+                <select id="profActionSelect" class="finput" style="margin-bottom:0.5rem">
+                  <option value="Approved salary raise benchmark to 70th percentile">Approved Salary Raise Benchmark</option>
+                  <option value="Offered team transfer to resolve toxic manager conflict">Offered Internal Team Transfer</option>
+                  <option value="Scheduled formal wellness discussion and EAP referral">Scheduled Wellness Check-in</option>
+                  <option value="Fast-tracked career development plan promotion review">Fast-tracked Promotion Review</option>
+                </select>
+                <label class="flabel" style="margin-bottom:0.4rem; margin-top:0.4rem">Intervention Discussion Details:</label>
+                <textarea id="profActionNotes" class="finput" rows="2" style="width:100%; margin-bottom:0.75rem" placeholder="e.g. Discussed details, employee agreed to wait for the review..."></textarea>
+                <button onclick="submitProfileManagerAction()" class="notif-btn primary" style="width:100%">✍️ Submit Manager Update</button>
+              </div>
+
+              <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; margin-top:0.5rem; display:flex; gap:0.5rem;">
+                <button onclick="forwardProfileAlertToHR()" class="notif-btn" style="flex:1">
+                  📨 Forward File to HR
+                </button>
+                <button onclick="triggerProfileEditModal()" class="notif-btn" style="flex:1">
+                  ✏️ Edit Metrics
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Intervention timeline ledger -->
+          <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:16px; padding:1.5rem;">
+            <h3 style="font-size:0.85rem; font-weight:800; text-transform:uppercase; color:var(--accent2); margin-bottom:1.25rem; display:flex; align-items:center; gap:0.4rem;">📜 Timeline History Ledger (HR, Manager & Employee Actions)</h3>
+            <div id="prof-timeline" class="notif-timeline">
+              <!-- Rendered dynamically by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- B. DEDICATED EMPLOYEE SELF-SERVICE WORKSPACE -->
+    <div id="employeeWorkspace" style="display:none;" class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+        <div>
+          <h2 style="font-size:1.4rem; font-weight:800; color:#fff">💻 My Development & Career Workspace</h2>
+          <p style="font-size:0.8rem; color:var(--muted); margin-top:2px">Welcome back, <strong id="empWorkspaceName">Arjun Sharma</strong></p>
+        </div>
+        <div style="background:rgba(99,102,241,0.08); border:1px solid var(--border); padding:0.4rem 1rem; border-radius:10px; font-size:0.8rem;">
+          ID: <span id="empWorkspaceId" style="color:var(--accent2); font-weight:700">EMP0001</span>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; align-items: start;">
+        <!-- Left Card: Profile & Health Status -->
+        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:16px; padding:1.5rem;">
+          <h3 style="font-size:0.9rem; color:var(--accent2); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1rem;">📈 My Career Status Telemetry</h3>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+            <div class="exp-item"><div class="exp-label">Tenure</div><div id="empWorkspaceTenure" class="exp-val">4.5 yrs</div></div>
+            <div class="exp-item"><div class="exp-label">Department</div><div id="empWorkspaceDept" class="exp-val">Engineering</div></div>
+            <div class="exp-item"><div class="exp-label">Appraisal Score</div><div id="empWorkspaceMgrScore" class="exp-val">7.0/10</div></div>
+            <div class="exp-item"><div class="exp-label">Last Promotion</div><div id="empWorkspacePromo" class="exp-val">2.0 yrs ago</div></div>
+          </div>
+          
+          <div style="padding:1rem; background:rgba(99,102,241,0.06); border-radius:12px; border:1px solid rgba(99,102,241,0.2); margin-bottom:1rem;">
+            <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; margin-bottom:0.25rem;">Pulse Alignment Rating</div>
+            <div style="display:flex; align-items:center; gap:0.5rem">
+              <span id="empWorkspacePulseRate" class="pulse-badge" style="font-size:0.8rem; padding:0.25rem 0.75rem">STABLE</span>
+              <span id="empWorkspacePulseScore" style="font-weight:700">32%</span>
+            </div>
+          </div>
+
+          <div style="padding:1rem; background:rgba(255,255,255,0.01); border-radius:12px; border:1px solid var(--border)">
+            <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; margin-bottom:0.4rem;">💬 Current Manager Feedback Comments</div>
+            <p id="empWorkspaceFeedback" style="font-size:0.8rem; color:var(--text); font-style:italic; line-height:1.4"></p>
+          </div>
+        </div>
+
+        <!-- Right Card: Intervention Portal -->
+        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:16px; padding:1.5rem;">
+          <h3 style="font-size:0.9rem; color:var(--accent2); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1rem;">⚙️ Self-Service Intervention Portal</h3>
+          <p style="font-size:0.8rem; color:var(--muted); margin-bottom:1.25rem; line-height:1.4">
+            AttriSense AI believes in open communication. If you feel misaligned, have feedback, or want a career health review, submit an action item below. It will immediately alert HR or your direct manager.
+          </p>
+          
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <button onclick="showEmpActionForm('HIKE_REQUEST')" class="notif-btn primary" style="width:100%; text-align:left; padding:0.75rem 1rem; font-size:0.85rem">
+              💸 Request Compensation Review (Salary Hike)
+            </button>
+            <button onclick="showEmpActionForm('TRANSFER_REQUEST')" class="notif-btn primary" style="width:100%; text-align:left; padding:0.75rem 1rem; font-size:0.85rem">
+              🔄 Request Internal Team Transfer
+            </button>
+            <button onclick="showEmpActionForm('WELLNESS_REQUEST')" class="notif-btn primary" style="width:100%; text-align:left; padding:0.75rem 1rem; font-size:0.85rem">
+              🧘 Request Confidential Wellness Support Check-in
+            </button>
+            <button onclick="showEmpActionForm('ACK_FEEDBACK')" class="notif-btn primary" style="width:100%; text-align:left; padding:0.75rem 1rem; font-size:0.85rem">
+              ✅ Acknowledge and Discuss Manager Feedback
+            </button>
+          </div>
+
+          <!-- Dynamic Input Form -->
+          <div id="empActionFormGroup" style="display:none; margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border)">
+            <h4 id="empActionTitle" style="font-size:0.85rem; color:#fff; margin-bottom:0.5rem">Submit Hike Request</h4>
+            <label class="flabel" id="empActionNoteLabel">Optional notes or comments:</label>
+            <textarea id="empActionNotes" class="finput" rows="2" style="width:100%; margin-bottom:0.75rem" placeholder="Provide context..."></textarea>
+            <input type="hidden" id="empActionType" />
+            <div id="empActionResult" style="display:none; margin-bottom:0.75rem; padding:0.75rem; border-radius:8px; font-size:0.8rem;"></div>
+            <button onclick="submitEmpAction()" id="submitEmpActionBtn" class="notif-btn primary" style="padding:0.5rem 1.25rem">Submit Action & Alert Team</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD EMPLOYEE MODAL (HR ONLY) -->
+    <div id="addModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;backdrop-filter:blur(4px);overflow-y:auto;">
+      <div style="max-width:680px;margin:2rem auto;background:#0f1629;border:1px solid rgba(99,102,241,0.35);border-radius:20px;padding:2rem;box-shadow:0 0 60px rgba(99,102,241,0.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <div>
+            <h2 style="font-size:1.2rem;font-weight:800;color:#fff">➕ Add New Employee</h2>
+            <p style="font-size:0.75rem;color:#64748b;margin-top:2px">Enter all 14 attrition signal parameters — risk score computed instantly</p>
+          </div>
+          <button onclick="closeModal()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-size:1rem;">✕</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <!-- Col 1 -->
+          <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div><label class="flabel">Full Name *</label><input id="f_name" class="finput" placeholder="e.g. Rahul Sharma" /></div>
+            <div><label class="flabel">Department *</label>
+              <select id="f_dept" class="finput">
+                <option value="Engineering">Engineering</option><option value="Product">Product</option>
+                <option value="Sales">Sales</option><option value="Finance">Finance</option>
+                <option value="HR">HR</option><option value="Operations">Operations</option>
+                <option value="Marketing">Marketing</option><option value="Data Science">Data Science</option>
+                <option value="IT">IT</option><option value="Legal">Legal</option>
+                <option value="Customer Success">Customer Success</option>
+              </select></div>
+            <div><label class="flabel">Tenure (years) *</label><input id="f_tenure" class="finput" type="number" min="0" max="30" step="0.1" value="3.0"/></div>
+            <div><label class="flabel">Performance Trend *</label>
+              <select id="f_perf" class="finput">
+                <option value="high_performer">High Performer</option>
+                <option value="improving">Improving</option>
+                <option value="stable" selected>Stable</option>
+                <option value="declining">Declining</option>
+                <option value="low_performer">Low Performer</option>
+              </select></div>
+            <div><label class="flabel">Salary Percentile (0–100) *</label><input id="f_sal" class="finput" type="number" min="1" max="100" value="50"/></div>
+            <div><label class="flabel">Absenteeism Rate (0.0–0.4) *</label><input id="f_absent" class="finput" type="number" min="0" max="0.4" step="0.01" value="0.05"/></div>
+            <div><label class="flabel">Meeting Participation (0–1) *</label><input id="f_meeting" class="finput" type="number" min="0" max="1" step="0.01" value="0.7"/></div>
+            <div><label class="flabel">Collaboration Index (0–1) *</label><input id="f_collab" class="finput" type="number" min="0" max="1" step="0.01" value="0.65"/></div>
+            <div><label class="flabel">Sentiment Score (−1 to +1) *</label><input id="f_sentiment" class="finput" type="number" min="-1" max="1" step="0.01" value="0.1"/></div>
+          </div>
+          <!-- Col 2 -->
+          <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div><label class="flabel">Manager Scorecard (1–10) *</label><input id="f_mgr" class="finput" type="number" min="1" max="10" step="0.1" value="7.0"/></div>
+            <div><label class="flabel">Years Since Promotion *</label><input id="f_promo" class="finput" type="number" min="0" max="10" step="0.5" value="2.0"/></div>
+            <div><label class="flabel">Trainings Completed (YTD) *</label><input id="f_train" class="finput" type="number" min="0" max="20" value="4"/></div>
+            <div><label class="flabel">Certifications *</label><input id="f_cert" class="finput" type="number" min="0" max="10" value="2"/></div>
+            <div><label class="flabel">Awards / Recognition Count *</label><input id="f_awards" class="finput" type="number" min="0" max="10" value="1"/></div>
+            <div><label class="flabel">Internal Job Searches *</label><input id="f_jobs" class="finput" type="number" min="0" max="30" value="2"/></div>
+            <div><label class="flabel">Team Outings Attended *</label><input id="f_outings" class="finput" type="number" min="0" max="15" value="4"/></div>
+            <div><label class="flabel">Mood Index (1–10) *</label><input id="f_mood" class="finput" type="number" min="1" max="10" step="0.1" value="6.5"/></div>
+            <div style="display:flex;gap:1rem;">
+              <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:#94a3b8;cursor:pointer;">
+                <input id="f_cross" type="checkbox" checked style="accent-color:#6366f1;"> Cross-functional Work
+              </label>
+              <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:#94a3b8;cursor:pointer;">
+                <input id="f_loc" type="checkbox" checked style="accent-color:#6366f1;"> Home Location Match
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedback -->
+        <div style="margin-top:1rem;">
+          <label class="flabel">Employee Feedback / Survey Response</label>
+          <textarea id="f_feedback" class="finput" rows="3" style="resize:vertical;width:100%" placeholder="e.g. Happy with the team. Would like faster growth opportunities..."></textarea>
+        </div>
+
+        <!-- Result banner -->
+        <div id="addResult" style="display:none;margin-top:1rem;padding:1rem;border-radius:10px;font-size:0.85rem;font-weight:600;"></div>
+
+        <div style="display:flex;gap:0.75rem;margin-top:1.25rem;justify-content:flex-end;">
+          <button onclick="closeModal()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:10px;padding:0.65rem 1.5rem;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85rem;">Cancel</button>
+          <button onclick="submitEmployee()" id="submitBtn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;border-radius:10px;padding:0.65rem 1.75rem;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:700;">⚡ Compute Risk & Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT EMPLOYEE MODAL (ROLE RESTRICTED FIELDS) -->
+    <div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;backdrop-filter:blur(6px);overflow-y:auto;">
+      <div style="max-width:680px;margin:2rem auto;background:rgba(15, 23, 42, 0.95);border:1px solid var(--border);border-radius:24px;padding:2.5rem;box-shadow:0 20px 50px rgba(0,0,0,0.6);backdrop-filter:blur(20px);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+          <div>
+            <h2 style="font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:-0.01em;">✏️ Edit Employee Metrics (<span id="editEmpId" style="color:var(--accent2)"></span>)</h2>
+            <p style="font-size:0.75rem;color:#64748b;margin-top:2px">Modify parameters authorized by your corporate role permissions</p>
+          </div>
+          <button onclick="closeEditModal()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#94a3b8'">✕</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:1.5rem;">
+          <!-- HR Section -->
+          <div id="editHrSection" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <h3 style="font-size:0.75rem;color:var(--accent2);border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:0.3rem;font-weight:700;letter-spacing:0.06em;">HR DEPARTMENT FIELDS</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div><label class="flabel">Full Name</label><input id="e_name" class="finput" /></div>
+              <div><label class="flabel">Department</label>
+                <select id="e_dept" class="finput">
+                  <option value="Engineering">Engineering</option><option value="Product">Product</option>
+                  <option value="Sales">Sales</option><option value="Finance">Finance</option>
+                  <option value="HR">HR</option><option value="Operations">Operations</option>
+                  <option value="Marketing">Marketing</option><option value="Data Science">Data Science</option>
+                  <option value="IT">IT</option><option value="Legal">Legal</option>
+                  <option value="Customer Success">Customer Success</option>
+                </select></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+              <div><label class="flabel">Tenure (years)</label><input id="e_tenure" class="finput" type="number" step="0.1"/></div>
+              <div><label class="flabel">Salary Percentile</label><input id="e_sal" class="finput" type="number"/></div>
+              <div><label class="flabel">Years Since Promo</label><input id="e_promo" class="finput" type="number" step="0.5"/></div>
+            </div>
+            <div><label class="flabel">Direct Manager</label><input id="e_manager" class="finput" /></div>
+          </div>
+
+          <!-- Analyst Section -->
+          <div id="editAnalystSection" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <h3 style="font-size:0.75rem;color:var(--accent2);border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:0.3rem;font-weight:700;letter-spacing:0.06em;">ANALYST / SENSOR FIELDS</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div><label class="flabel">Absenteeism Rate (0.0–0.4)</label><input id="e_absent" class="finput" type="number" step="0.01"/></div>
+              <div><label class="flabel">Meeting Participation (0–1)</label><input id="e_meeting" class="finput" type="number" step="0.01"/></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div><label class="flabel">Collaboration Index (0–1)</label><input id="e_collab" class="finput" type="number" step="0.01"/></div>
+              <div><label class="flabel">Sentiment Score (−1 to +1)</label><input id="e_sentiment" class="finput" type="number" step="0.01"/></div>
+            </div>
+          </div>
+
+          <!-- Manager Section -->
+          <div id="editManagerSection" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <h3 id="editManagerHeader" style="font-size:0.75rem;color:var(--accent2);border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:0.3rem;font-weight:700;letter-spacing:0.06em;">MANAGER / PERFORMANCE FIELDS</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div id="editMoodIndexGroup"><label class="flabel">Mood Index (1–10)</label><input id="e_mood" class="finput" type="number" step="0.1"/></div>
+              <div id="editManagerScorecardGroup"><label class="flabel">Manager Scorecard (1–10)</label><input id="e_mgr" class="finput" type="number" step="0.1"/></div>
+            </div>
+          </div>
+
+          <!-- Common Section -->
+          <div id="editCommonSection" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <h3 style="font-size:0.75rem;color:var(--accent2);border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:0.3rem;font-weight:700;letter-spacing:0.06em;">COMMON METRICS</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+              <div><label class="flabel">Internal Job Searches</label><input id="e_jobs" class="finput" type="number" /></div>
+              <div><label class="flabel">Trainings (YTD)</label><input id="e_train" class="finput" type="number" /></div>
+              <div><label class="flabel">Awards Count</label><input id="e_awards" class="finput" type="number" /></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div><label class="flabel">Cross-Functional Work</label>
+                <select id="e_cross" class="finput">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select></div>
+              <div><label class="flabel">Team Outings Attended</label><input id="e_outings" class="finput" type="number" /></div>
+            </div>
+          </div>
+
+          <!-- Feedback Section -->
+          <div id="editFeedbackSection" style="display:flex;flex-direction:column;gap:0.4rem;">
+            <label class="flabel">Appraisal Feedback Notes</label>
+            <textarea id="e_feedback" class="finput" rows="3" style="width:100%" placeholder="Log manager notes, appraisal remarks, or employee discussions..."></textarea>
+          </div>
+        </div>
+
+        <div id="editResult" style="display:none;margin-top:1rem;padding:1rem;border-radius:10px;font-size:0.85rem;font-weight:600;"></div>
+
+        <div style="display:flex;gap:0.75rem;margin-top:1.25rem;justify-content:flex-end;">
+          <button onclick="closeEditModal()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:10px;padding:0.65rem 1.5rem;cursor:pointer;">Cancel</button>
+          <button onclick="submitEditEmployee()" id="saveEditBtn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;border-radius:10px;padding:0.65rem 1.75rem;cursor:pointer;font-weight:700;">💾 Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAB FLOATING "+" BUTTON -->
+    <button onclick="document.getElementById('addModal').style.display='block'" title="Add new employee" id="fabBtn"
+      style="position:fixed;bottom:2rem;right:2rem;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.5);z-index:500;transition:transform 0.2s,box-shadow 0.2s;"
+      onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 6px 28px rgba(99,102,241,0.7)'"
+      onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(99,102,241,0.5)'">➕</button>
+
+    <style>
+    .flabel { display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:0.3rem; }
+    .finput { width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(100,120,255,0.18);color:#e2e8f0;border-radius:8px;padding:0.45rem 0.75rem;font-size:0.83rem;font-family:'Inter',sans-serif;outline:none; }
+    .finput:focus { border-color:#6366f1; }
+    .finput option { background:#1e293b; }
+    </style>
+
+  </main>
+
+  <footer class="footer">
+    <p>🧠 <strong>AttriSense AI</strong> &nbsp;|&nbsp; LTTS Global Hackathon 2026 &nbsp;|&nbsp;
+       <em>"Predict Attrition Before It Happens."</em> &nbsp;|&nbsp;
+       Data shown is fictitious for demonstration purposes.</p>
+  </footer>
+
+</div>
+
+<script>
+const RISK_COLORS = { CRITICAL:'#ef4444', HIGH:'#f97316', MODERATE:'#eab308', LOW:'#22c55e' };
+const MOOD_ICONS  = { Engaged:'😄', 'Neutral-Positive':'🙂', Neutral:'😐', Disengaged:'😔', Dissatisfied:'😞', 'Severely Disengaged':'😰' };
+const PAGE_SIZE = 25;
+
+let allEmployees = [];
+let filteredEmployees = [];
+let currentPage = 1;
+
+// Global chart instance storage to prevent reuse issues
+window.riskChartInstance = null;
+
+// Switch tab view
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+  document.getElementById(`tabBtn-${tabId}`).classList.add('active');
+  document.getElementById(`tabContent-${tabId}`).classList.add('active');
+  
+  if (tabId === 'managers') {
+    loadManagerAnalytics();
+  } else if (tabId === 'notifications') {
+    loadNotifications();
+  }
+
+  if (tabId !== 'profile') {
+    document.getElementById("tabBtn-profile").style.display = "none";
+  }
+}
+
+// Timestamp
+function updateTS() {
+  const tsEl = document.getElementById('ts');
+  if (tsEl) {
+    tsEl.textContent = new Date().toLocaleString('en-IN', { timeZone:'Asia/Kolkata', hour12:true });
+  }
+}
+setInterval(updateTS, 30000);
+
+// Animated counter
+function animateCounter(el, target, duration=1500) {
+  if (!el) return;
+  let start = 0, startTime = null;
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    const p = Math.min((ts - startTime) / duration, 1);
+    el.textContent = Math.round(p * target);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// Login & Session logic
+function checkLogin() {
+  const user = localStorage.getItem("activeUser");
+  if (!user) {
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("appContainer").style.display = "none";
+  } else {
+    window.currentUser = JSON.parse(user);
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("appContainer").style.display = "block";
+    
+    // Update Header
+    document.getElementById("userNameText").textContent = window.currentUser.name;
+    document.getElementById("userRoleText").textContent = `(${window.currentUser.role.replace('_', ' ')})`;
+    updateTS();
+    
+    // Role based setup
+    applyRolePermissions();
+  }
+}
+
+function loginAs(name, role, dept, empId) {
+  const user = { name, role, dept, empId };
+  localStorage.setItem("activeUser", JSON.stringify(user));
+  checkLogin();
+}
+
+function logout() {
+  localStorage.removeItem("activeUser");
+  checkLogin();
+}
+
+function applyRolePermissions() {
+  const role = window.currentUser.role;
+  
+  const managersTab = document.getElementById("tabBtn-managers");
+  const analyticsTab = document.getElementById("tabBtn-analytics");
+  const notificationsTab = document.getElementById("tabBtn-notifications");
+  const fabBtn = document.getElementById("fabBtn");
+  const navTabs = document.getElementById("navTabsRow");
+  
+  // Defaults
+  managersTab.style.display = "inline-block";
+  analyticsTab.style.display = "inline-block";
+  notificationsTab.style.display = "inline-block";
+  fabBtn.style.display = "block";
+  navTabs.style.display = "block";
+  
+  document.getElementById("employeeWorkspace").style.display = "none";
+  document.getElementById("dashboardWorkspace").style.display = "block";
+  document.getElementById("aggregateChartsSection").style.display = "grid";
+  document.getElementById("tableTitleText").textContent = "👤 Employee Attrition Risk Register";
+  
+  if (role === "HR_ADMIN") {
+    // HR Director sees all
+  } else if (role === "ANALYST") {
+    managersTab.style.display = "none";
+    fabBtn.style.display = "none";
+  } else if (role === "MANAGER") {
+    managersTab.style.display = "none";
+    fabBtn.style.display = "none";
+    document.getElementById("aggregateChartsSection").style.display = "none"; // Hide aggregate metrics from managers
+    document.getElementById("tableTitleText").textContent = `👤 Attrition Risk Telemetry — Reportees for ${window.currentUser.name}`;
+  } else if (role === "EMPLOYEE") {
+    // Hide standard dashboards completely
+    document.getElementById("dashboardWorkspace").style.display = "none";
+    document.getElementById("employeeWorkspace").style.display = "block";
+    fabBtn.style.display = "none";
+    navTabs.style.display = "none";
+    
+    loadEmployeeSelfService();
+  }
+  
+  // Fetch dashboard stats/list
+  if (role !== "EMPLOYEE") {
+    loadDashboard();
+  }
+}
+
+// Filter + paginate
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const level  = document.getElementById('levelFilter').value;
+  const dept   = document.getElementById('deptFilter').value;
+
+  filteredEmployees = allEmployees.filter(e => {
+    // Tarun Gupta manager restriction
+    if (window.currentUser.role === "MANAGER" && !e.manager.includes(window.currentUser.name)) {
+      return false;
+    }
+    
+    const matchSearch = !search ||
+      e.name.toLowerCase().includes(search) ||
+      e.employee_id.toLowerCase().includes(search);
+    const matchLevel = level === 'ALL' || e.level === level;
+    const matchDept  = dept  === 'ALL' || e.department === dept;
+    return matchSearch && matchLevel && matchDept;
+  });
+
+  currentPage = 1;
+  renderTable();
+  renderPagination();
+  document.getElementById('filterCount').textContent =
+    `${filteredEmployees.length} of ${allEmployees.length} employees`;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('empTableBody');
+  tbody.innerHTML = '';
+  document.querySelectorAll('[id^="exp-"]').forEach(e => e.remove());
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const slice = filteredEmployees.slice(start, start + PAGE_SIZE);
+
+  if (slice.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">No employees match the current filters.</td></tr>';
+    return;
+  }
+
+  slice.forEach((emp, localIdx) => {
+    const idx = start + localIdx;
+    const barWidth = Math.round(emp.score);
+    const moodScore = emp.mood != null ? emp.mood.toFixed(1) : '—';
+    const moodNum = parseFloat(moodScore);
+    const moodLabel = moodNum >= 7 ? 'Engaged' : moodNum >= 5 ? 'Neutral' : moodNum >= 3 ? 'Disengaged' : 'Severely Disengaged';
+    const moodIcon = MOOD_ICONS[moodLabel] || '😐';
+
+    const row = document.createElement('tr');
+    row.id = `row-${idx}`;
+    row.className = 'emp-tr';
+    if (window.highlightedEmpId && emp.employee_id === window.highlightedEmpId) {
+      row.className += ' row-highlighted';
+    }
+    row.innerHTML = `
+      <td><code style="color:var(--accent2);font-size:0.78rem">${emp.employee_id}</code></td>
+      <td><strong>${emp.name}</strong></td>
+      <td><span style="color:var(--muted)">${emp.department}</span></td>
+      <td><span style="color:#94a3b8;font-size:0.8rem">${emp.manager || 'No Manager'}</span></td>
+      <td>
+        <div class="risk-bar-wrap">
+          <div class="risk-bar" style="width:${Math.min(barWidth,120)}px;background:${RISK_COLORS[emp.level]}"></div>
+          <span class="score-${emp.level}">${emp.score}%</span>
+        </div>
+      </td>
+      <td><span class="pulse-badge badge-${emp.level}">${emp.level}</span></td>
+      <td><span style="color:var(--muted);font-size:0.78rem">${emp.top_driver}</span></td>
+      <td>${moodIcon} <span style="font-size:0.78rem;color:var(--muted)">${moodScore}</span></td>`;
+    row.onclick = (event) => {
+      // Don't expand if click was on a button inside row (though there are none on parent)
+      toggleExpand(emp, idx, row);
+    };
+    tbody.appendChild(row);
+  });
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredEmployees.length / PAGE_SIZE);
+  const pg = document.getElementById('pagination');
+  pg.innerHTML = '';
+  if (totalPages <= 1) return;
+
+  // Prev
+  const prev = document.createElement('button');
+  prev.className = 'page-btn'; prev.textContent = '← Prev';
+  prev.disabled = currentPage === 1;
+  prev.onclick = () => { currentPage--; renderTable(); renderPagination(); };
+  pg.appendChild(prev);
+
+  // Page numbers (show window of 5 around current)
+  const start = Math.max(1, currentPage - 2);
+  const end   = Math.min(totalPages, start + 4);
+  for (let i = start; i <= end; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+    btn.textContent = i;
+    btn.onclick = ((pg) => () => { currentPage = pg; renderTable(); renderPagination(); })(i);
+    pg.appendChild(btn);
+  }
+
+  // Page info
+  const info = document.createElement('span');
+  info.className = 'page-info';
+  const s = (currentPage-1)*PAGE_SIZE + 1;
+  const e = Math.min(currentPage*PAGE_SIZE, filteredEmployees.length);
+  info.textContent = `${s}–${e} of ${filteredEmployees.length}`;
+  pg.appendChild(info);
+
+  // Next
+  const next = document.createElement('button');
+  next.className = 'page-btn'; next.textContent = 'Next →';
+  next.disabled = currentPage === totalPages;
+  next.onclick = () => { currentPage++; renderTable(); renderPagination(); };
+  pg.appendChild(next);
+}
+
+function toggleExpand(emp, idx, row) {
+  if (window.highlightedEmpId && window.highlightedEmpId !== emp.employee_id) {
+    window.highlightedEmpId = null;
+    document.querySelectorAll('.row-highlighted').forEach(r => r.classList.remove('row-highlighted'));
+  }
+  const existingExp = document.getElementById(`exp-${idx}`);
+  if (existingExp) { existingExp.remove(); return; }
+  document.querySelectorAll('[id^="exp-"]').forEach(e => e.remove());
+
+  const expRow = document.createElement('tr');
+  expRow.id = `exp-${idx}`;
+  
+  // Render expansion including multi-agent run buttons
+  expRow.innerHTML = `
+    <td colspan="8">
+      <div style="padding:0.5rem 0">
+        <div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem;padding:0.6rem 0.75rem;background:rgba(255,255,255,0.02);border-radius:8px;border-left:3px solid rgba(99,102,241,0.4)">
+          💬 Feedback response: "${emp.feedback}"
+        </div>
+        <div class="exp-grid">
+          <div class="exp-item"><div class="exp-label">Employee ID</div><div class="exp-val" style="color:var(--accent2)">${emp.employee_id}</div></div>
+          <div class="exp-item"><div class="exp-label">Manager</div><div class="exp-val">${emp.manager || 'None'}</div></div>
+          <div class="exp-item"><div class="exp-label">Tenure</div><div class="exp-val">${emp.tenure_years} yrs</div></div>
+          <div class="exp-item"><div class="exp-label">Risk Score</div><div class="exp-val score-${emp.level}">${emp.score}%</div></div>
+          <div class="exp-item"><div class="exp-label">Top Driver</div><div class="exp-val">${emp.top_driver}</div></div>
+          <div class="exp-item"><div class="exp-label">Mood Index</div><div class="exp-val">${emp.mood}/10</div></div>
+          <div class="exp-item"><div class="exp-label">Sentiment</div><div class="exp-val">${emp.sentiment >= 0 ? '😊' : '😔'} ${emp.sentiment}</div></div>
+        </div>
+
+        <!-- AI AGENT BOX -->
+        <div style="margin-top:1.25rem;">
+          <button onclick="runAgentAnalysis('${emp.employee_id}', ${idx})" id="agentBtn-${idx}" class="notif-btn primary" style="padding:0.5rem 1rem">
+            ⚡ Execute Live Multi-Agent AI Analysis
+          </button>
+          <div id="agentReportLoader-${idx}" style="display:none;margin-top:1rem;color:var(--accent2);font-size:0.8rem">
+            <span class="spinner"></span> Running Google ADK Orchestrator & sub-agents in sequence (Signal, Sentiment, Risk, Retention)...
+          </div>
+          <div id="agentReportBox-${idx}" class="agent-report-box" style="display:none"></div>
+        </div>
+
+        <!-- COLLABORATION WORKFLOWS -->
+        <div class="collab-box">
+          <div class="collab-title">👥 Cross-Department Intervention & Alert Actions</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+            <button onclick="sendAlert('FORWARD', '${emp.employee_id}', '${emp.name}', 'HR Team', 'Forwarding employee metrics file to HR for urgent retention discussion.')" class="notif-btn">
+              📨 Forward File to HR
+            </button>
+            <button onclick="sendAlert('ALARM', '${emp.employee_id}', '${emp.name}', 'Manager', 'Critical flight risk warning sent. Schedule discussion.')" class="notif-btn">
+              🚨 Escalate to Line Manager
+            </button>
+            <button onclick="showManagerActionForm(${idx}, '${emp.employee_id}', '${emp.name}')" class="notif-btn">
+              ✍️ Log Manager Intervention Notes
+            </button>
+            <button onclick="viewEmployeeProfile('${emp.employee_id}')" class="notif-btn primary" style="margin-left:auto;">
+              📋 View Profile Page
+            </button>
+            <button onclick="openEditModal('${emp.employee_id}')" class="notif-btn" style="margin-left:0.5rem;">
+              ✏️ Edit Employee Metrics
+            </button>
+          </div>
+
+          <div id="mgrForm-${idx}" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+            <label class="flabel" style="margin-bottom:0.4rem">Select Intervention Action Logged by Manager:</label>
+            <select id="actionSelect-${idx}" class="finput" style="max-width:350px;margin-bottom:0.5rem">
+              <option value="Approved salary raise benchmark to 70th percentile">Approved Salary Raise Benchmark</option>
+              <option value="Offered team transfer to resolve toxic manager conflict">Offered Internal Team Transfer</option>
+              <option value="Scheduled formal wellness discussion and EAP referral">Scheduled Wellness Check-in</option>
+              <option value="Fast-tracked career development plan promotion review">Fast-tracked Promotion Review</option>
+            </select>
+            <br>
+            <label class="flabel" style="margin-bottom:0.4rem">Intervention Discussion Details:</label>
+            <textarea id="actionNotes-${idx}" class="finput" rows="2" style="width:100%;margin-bottom:0.75rem" placeholder="e.g. Employee expressed satisfaction with the raise, risk levels stabilizing..."></textarea>
+            <button onclick="submitManagerAction(${idx}, '${emp.employee_id}', '${emp.name}')" class="notif-btn primary">Submit Update & Notify HR/Analyst</button>
+          </div>
+        </div>
+      </div>
+    </td>`;
+  row.insertAdjacentElement('afterend', expRow);
+}
+
+// Edit Modal Functions
+async function openEditModal(empId) {
+  document.getElementById("editEmpId").textContent = empId;
+  document.getElementById("editModal").style.display = "block";
+  document.getElementById("editResult").style.display = "none";
+  
+  try {
+    const res = await fetch(`/api/employee/${empId}`);
+    const emp = await res.json();
+    
+    // Populate
+    document.getElementById("e_name").value = emp.name;
+    document.getElementById("e_dept").value = emp.department;
+    document.getElementById("e_tenure").value = emp.tenure_years;
+    document.getElementById("e_sal").value = emp.salary_percentile;
+    document.getElementById("e_promo").value = emp.years_since_promotion;
+    document.getElementById("e_manager").value = emp.manager || "";
+    document.getElementById("e_absent").value = emp.absenteeism_rate;
+    document.getElementById("e_meeting").value = emp.meeting_participation;
+    document.getElementById("e_collab").value = emp.collaboration_index;
+    document.getElementById("e_sentiment").value = emp.sentiment_score;
+    document.getElementById("e_mood").value = emp.mood_index;
+    document.getElementById("e_mgr").value = emp.manager_scorecard;
+    document.getElementById("e_jobs").value = emp.internal_job_searches;
+    document.getElementById("e_train").value = emp.training_count_ytd;
+    document.getElementById("e_awards").value = emp.awards_count;
+    document.getElementById("e_cross").value = emp.cross_functional_work ? "true" : "false";
+    document.getElementById("e_outings").value = emp.team_outings_attended;
+    document.getElementById("e_feedback").value = emp.feedback;
+    
+    // Show/hide and enable/disable sections based on role
+    const role = window.currentUser.role;
+    const editHr = document.getElementById("editHrSection");
+    const editAnalyst = document.getElementById("editAnalystSection");
+    const editManager = document.getElementById("editManagerSection");
+    const editCommon = document.getElementById("editCommonSection");
+    const editFeedback = document.getElementById("editFeedbackSection");
+
+    // Reset visibility
+    editHr.style.display = "flex";
+    editAnalyst.style.display = "flex";
+    editManager.style.display = "flex";
+    editCommon.style.display = "flex";
+    editFeedback.style.display = "flex";
+
+    // Enable all inputs
+    document.querySelectorAll("#editModal input, #editModal select, #editModal textarea").forEach(i => {
+      i.disabled = false;
+      i.style.opacity = 1;
+    });
+
+    // Reset grid components visibility
+    document.getElementById("editManagerScorecardGroup").style.display = "block";
+    document.getElementById("editMoodIndexGroup").style.display = "block";
+
+    if (role === "HR_ADMIN") {
+      // HR Admin: HR fields + Common metrics only
+      editAnalyst.style.display = "none";
+      editManager.style.display = "none";
+      editFeedback.style.display = "none";
+    } else if (role === "ANALYST") {
+      // Analyst: Analyst fields, Mood Index, Common metrics, Feedback notes (No HR fields, No Manager Scorecard)
+      editHr.style.display = "none";
+      editManager.style.display = "flex";
+      document.getElementById("editManagerScorecardGroup").style.display = "none";
+    } else if (role === "MANAGER") {
+      // Manager: Mood Index, Manager Scorecard, Feedback notes only
+      editHr.style.display = "none";
+      editAnalyst.style.display = "none";
+      editCommon.style.display = "none";
+      editManager.style.display = "flex";
+    }
+  } catch(e) {
+    alert("Error loading employee data: " + e.message);
+  }
+}
+
+function closeEditModal() {
+  document.getElementById("editModal").style.display = "none";
+}
+
+async function submitEditEmployee() {
+  const empId = document.getElementById("editEmpId").textContent;
+  const role = window.currentUser.role;
+  const btn = document.getElementById("saveEditBtn");
+  const resEl = document.getElementById("editResult");
+  
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  
+  const payload = {
+    role: role,
+    data: {
+      name: document.getElementById("e_name").value,
+      department: document.getElementById("e_dept").value,
+      tenure_years: parseFloat(document.getElementById("e_tenure").value),
+      salary_percentile: parseInt(document.getElementById("e_sal").value),
+      years_since_promotion: parseFloat(document.getElementById("e_promo").value),
+      manager: document.getElementById("e_manager").value,
+      absenteeism_rate: parseFloat(document.getElementById("e_absent").value),
+      meeting_participation: parseFloat(document.getElementById("e_meeting").value),
+      collaboration_index: parseFloat(document.getElementById("e_collab").value),
+      sentiment_score: parseFloat(document.getElementById("e_sentiment").value),
+      mood_index: parseFloat(document.getElementById("e_mood").value),
+      manager_scorecard: parseFloat(document.getElementById("e_mgr").value),
+      internal_job_searches: parseInt(document.getElementById("e_jobs").value),
+      training_count_ytd: parseInt(document.getElementById("e_train").value),
+      awards_count: parseInt(document.getElementById("e_awards").value),
+      cross_functional_work: document.getElementById("e_cross").value === "true",
+      team_outings_attended: parseInt(document.getElementById("e_outings").value),
+      feedback: document.getElementById("e_feedback").value
+    }
+  };
+  
+  try {
+    const res = await fetch(`/api/employee/${empId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    
+    const data = await res.json();
+    if (res.status === 200) {
+      window.highlightedEmpId = empId;
+      const color = RISK_COLORS[data.new_level] || '#6366f1';
+      resEl.style.display = "block";
+      resEl.style.background = `${color}22`;
+      resEl.style.color = color;
+      resEl.style.border = `1px solid ${color}55`;
+      resEl.innerHTML = `✅ Successfully updated employee data! New Risk Level: <strong>${data.new_level} (${data.new_score}%)</strong>`;
+      
+      setTimeout(() => {
+        closeEditModal();
+        loadDashboard();
+      }, 1500);
+    } else {
+      resEl.style.display = "block";
+      resEl.style.background = "rgba(239,68,68,0.15)";
+      resEl.style.color = "#ef4444";
+      resEl.textContent = `Error: ${data.error}`;
+    }
+  } catch(e) {
+    alert("Network error: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "💾 Save Changes";
+  }
+}
+
+// Global active profile employee ID storage
+window.activeProfileEmpId = null;
+
+async function viewEmployeeProfile(empId) {
+  window.activeProfileEmpId = empId;
+  
+  // Show Profile Tab in nav container
+  const profBtn = document.getElementById("tabBtn-profile");
+  profBtn.style.display = "inline-block";
+  
+  // Switch to the profile tab
+  switchTab("profile");
+  
+  // Fetch details
+  try {
+    const res = await fetch(`/api/employee/${empId}`);
+    const emp = await res.json();
+    
+    // Populate Demographics
+    document.getElementById("prof-name").textContent = emp.name;
+    document.getElementById("prof-id").textContent = emp.employee_id;
+    document.getElementById("prof-dept").textContent = emp.department;
+    document.getElementById("prof-manager").textContent = emp.manager || "None";
+    document.getElementById("prof-tenure").textContent = `${emp.tenure_years} yrs`;
+    document.getElementById("prof-riskScore").textContent = `${emp.risk_score}%`;
+    
+    const badge = document.getElementById("prof-riskBadge");
+    badge.textContent = emp.risk_level;
+    badge.className = `pulse-badge badge-${emp.risk_level}`;
+    
+    // Populate Telemetry variables
+    const grid = document.getElementById("prof-paramsGrid");
+    grid.innerHTML = "";
+    
+    const params = [
+      { label: "Absenteeism Rate", val: `${(emp.absenteeism_rate * 100).toFixed(1)}%` },
+      { label: "Meeting Participation", val: `${(emp.meeting_participation * 100).toFixed(0)}%` },
+      { label: "Collaboration Index", val: `${emp.collaboration_index.toFixed(2)}/1.0` },
+      { label: "Sentiment Score", val: `${emp.sentiment_score >= 0 ? "😊" : "😔"} ${emp.sentiment_score}` },
+      { label: "Mood Index", val: `${emp.mood_index}/10` },
+      { label: "Manager Scorecard", val: `${emp.manager_scorecard}/10` },
+      { label: "Salary Percentile", val: `${emp.salary_percentile}th pct` },
+      { label: "Years since promotion", val: `${emp.years_since_promotion} yrs` },
+      { label: "Internal job searches", val: emp.internal_job_searches },
+      { label: "Trainings (YTD)", val: emp.training_count_ytd },
+      { label: "Performance Trend", val: emp.performance_trend.replace("_", " ") },
+      { label: "Awards Count", val: emp.awards_count },
+      { label: "Location Match", val: emp.base_location_match ? "Yes ✅" : "No ❌" },
+      { label: "Cross-Functional Work", val: emp.cross_functional_work ? "Yes ✅" : "No ❌" },
+      { label: "Team Outings Attended", val: emp.team_outings_attended }
+    ];
+    
+    params.forEach(p => {
+      const item = document.createElement("div");
+      item.className = "exp-item";
+      item.innerHTML = `<div class="exp-label">${p.label}</div><div class="exp-val">${p.val}</div>`;
+      grid.appendChild(item);
+    });
+
+    // Populate timeline ledger (HR, Manager & Employee logs)
+    await loadProfileTimeline(empId, emp.name);
+
+  } catch(e) {
+    console.error("Error loading employee profile:", e);
+  }
+}
+
+async function loadProfileTimeline(empId, name) {
+  const tl = document.getElementById("prof-timeline");
+  tl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem">Loading timeline history ledger...</div>';
+  
+  try {
+    const res = await fetch("/api/notifications");
+    const data = await res.json();
+    tl.innerHTML = "";
+    
+    // Filter notifications specifically related to this employee
+    const filtered = data.filter(n => n.employee_id === empId);
+    
+    if (filtered.length === 0) {
+      tl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:1.5rem">No action history logged for this employee. Use the actions logger to create one.</div>';
+      return;
+    }
+    
+    // Sort descending by timestamp
+    filtered.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    filtered.forEach(n => {
+      const item = document.createElement("div");
+      item.className = "notif-item";
+      item.style.background = "rgba(255,255,255,0.01)";
+      item.style.padding = "1rem";
+      
+      let icon = "🔔";
+      let titleColor = "#fff";
+      if (n.type === "ALARM") { icon = "🚨"; titleColor = "var(--critical)"; }
+      else if (n.type === "FORWARD") { icon = "📨"; titleColor = "var(--accent2)"; }
+      else if (n.type === "MANAGER_ACTION") { icon = "✍️"; titleColor = "var(--low)"; }
+      else if (n.type === "HIKE_REQUEST") { icon = "💸"; titleColor = "var(--accent2)"; }
+      else if (n.type === "TRANSFER_REQUEST") { icon = "🔄"; titleColor = "var(--high)"; }
+      else if (n.type === "WELLNESS_REQUEST") { icon = "🧘"; titleColor = "var(--moderate)"; }
+      
+      const ts = new Date(n.timestamp).toLocaleString();
+      const notesBlock = n.notes ? `<div class="notif-notes" style="margin-top:0.5rem;background:rgba(255,255,255,0.02);border-left-color:var(--accent)">${n.notes}</div>` : "";
+      
+      item.innerHTML = `
+        <div class="notif-icon ${n.type}" style="width:36px;height:36px;font-size:1rem;">${icon}</div>
+        <div class="notif-body">
+          <div class="notif-meta">
+            <span class="notif-sender" style="color:${titleColor};font-size:0.83rem;">${n.type.replace("_", " ")}: ${n.sender} ➔ ${n.recipient}</span>
+            <span class="notif-time">${ts}</span>
+          </div>
+          <div class="notif-msg" style="font-size:0.8rem;color:#cbd5e1;">${n.message}</div>
+          ${notesBlock}
+        </div>
+      `;
+      tl.appendChild(item);
+    });
+  } catch(e) {
+    tl.innerHTML = `<div style="text-align:center;color:var(--critical);padding:1rem">Error timeline ledger: ${e.message}</div>`;
+  }
+}
+
+async function submitProfileManagerAction() {
+  if (!window.activeProfileEmpId) return;
+  const empId = window.activeProfileEmpId;
+  const name = document.getElementById("prof-name").textContent;
+  const act = document.getElementById("profActionSelect").value;
+  const note = document.getElementById("profActionNotes").value.trim() || "No additional details provided.";
+  
+  try {
+    const res = await fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'MANAGER_ACTION',
+        sender: 'Line Manager',
+        recipient: 'HR & Analyst Team',
+        employee_id: empId,
+        employee_name: name,
+        message: act,
+        notes: note
+      })
+    });
+    if (res.status === 201) {
+      alert('Manager intervention logged in profile timeline!');
+      document.getElementById("profActionNotes").value = "";
+      // Refresh timeline
+      await loadProfileTimeline(empId, name);
+      // Reload dashboard in background
+      const fresh = await fetch('/api/risk-overview');
+      allEmployees = await fresh.json();
+      applyFilters();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function forwardProfileAlertToHR() {
+  if (!window.activeProfileEmpId) return;
+  const empId = window.activeProfileEmpId;
+  const name = document.getElementById("prof-name").textContent;
+  
+  await sendAlert('FORWARD', empId, name, 'HR Team', 'Forwarding employee metrics file to HR for urgent retention discussion.');
+  // Refresh timeline
+  await loadProfileTimeline(empId, name);
+}
+
+function triggerProfileEditModal() {
+  if (!window.activeProfileEmpId) return;
+  openEditModal(window.activeProfileEmpId);
+}
+
+// Employee Portal Actions
+async function loadEmployeeSelfService() {
+  const empId = window.currentUser.empId;
+  try {
+    const res = await fetch(`/api/employee/${empId}`);
+    const emp = await res.json();
+    
+    document.getElementById("empWorkspaceName").textContent = emp.name;
+    document.getElementById("empWorkspaceId").textContent = emp.employee_id;
+    document.getElementById("empWorkspaceTenure").textContent = `${emp.tenure_years} yrs`;
+    document.getElementById("empWorkspaceDept").textContent = emp.department;
+    document.getElementById("empWorkspaceMgrScore").textContent = `${emp.manager_scorecard}/10`;
+    document.getElementById("empWorkspacePromo").textContent = `${emp.years_since_promotion} yrs ago`;
+    
+    // User-friendly rating names
+    const friendlyRatings = {
+      CRITICAL: "Action Needed",
+      HIGH: "Attention Advised",
+      MODERATE: "Aligned",
+      LOW: "Highly Aligned"
+    };
+    
+    const pulseBadge = document.getElementById("empWorkspacePulseRate");
+    pulseBadge.textContent = friendlyRatings[emp.risk_level] || emp.risk_level;
+    pulseBadge.className = `pulse-badge badge-${emp.risk_level}`;
+    
+    // User friendly alignment percentage (complement of risk score)
+    const alignmentScore = 100 - emp.risk_score;
+    document.getElementById("empWorkspacePulseScore").textContent = `${alignmentScore}% Alignment`;
+    
+    document.getElementById("empWorkspaceFeedback").textContent = `"${emp.feedback}"`;
+    document.getElementById("empActionFormGroup").style.display = "none";
+  } catch(e) {
+    console.error("Error loading employee cockpit:", e);
+  }
+}
+
+function showEmpActionForm(type) {
+  document.getElementById("empActionFormGroup").style.display = "block";
+  document.getElementById("empActionResult").style.display = "none";
+  document.getElementById("empActionType").value = type;
+  document.getElementById("empActionNotes").value = "";
+  
+  const titles = {
+    HIKE_REQUEST: "💸 Submit Compensation Review Request",
+    TRANSFER_REQUEST: "🔄 Submit Internal Team Alignment / Transfer Request",
+    WELLNESS_REQUEST: "🧘 Submit Confidential Wellness support Request",
+    ACK_FEEDBACK: "✅ Submit Feedback Acknowledgment & Comments"
+  };
+  document.getElementById("empActionTitle").textContent = titles[type] || "Submit Action";
+}
+
+async function submitEmpAction() {
+  const empId = window.currentUser.empId;
+  const type = document.getElementById("empActionType").value;
+  const notes = document.getElementById("empActionNotes").value.trim();
+  const btn = document.getElementById("submitEmpActionBtn");
+  const resEl = document.getElementById("empActionResult");
+  
+  if (type !== 'WELLNESS_REQUEST' && !notes) {
+    alert("Please provide context or details for this request.");
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = "Submitting...";
+  
+  try {
+    const res = await fetch(`/api/employee/${empId}/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action_type: type, notes: notes })
+    });
+    const data = await res.json();
+    if (res.status === 200) {
+      resEl.style.display = "block";
+      resEl.style.background = "rgba(34,197,94,0.15)";
+      resEl.style.color = "#22c55e";
+      resEl.style.border = "1px solid rgba(34,197,94,0.3)";
+      resEl.textContent = "✅ Action submitted! HR and your Line Manager have been notified.";
+      
+      // Reload stats
+      setTimeout(() => {
+        loadEmployeeSelfService();
+      }, 1500);
+    } else {
+      resEl.style.display = "block";
+      resEl.style.background = "rgba(239,68,68,0.15)";
+      resEl.style.color = "#ef4444";
+      resEl.textContent = `Error: ${data.error}`;
+    }
+  } catch(e) {
+    alert("Network error: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Submit Action & Alert Team";
+  }
+}
+
+// WORKFLOW / COLLABORATION INTERACTIONS
+async function sendAlert(type, empId, name, recipient, message) {
+  const notes = type === 'FORWARD' ? 'Analyst review notes: parameters breached threshold.' : 'System warning auto-escalated.';
+  try {
+    const res = await fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type,
+        sender: type === 'FORWARD' ? 'Analyst (Risk Control)' : 'HR Operations',
+        recipient,
+        employee_id: empId,
+        employee_name: name,
+        message,
+        notes
+      })
+    });
+    if (res.status === 201) {
+      alert(`Notification sent to ${recipient} successfully!`);
+      loadNotifications();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function showManagerActionForm(idx, empId, name) {
+  const form = document.getElementById(`mgrForm-${idx}`);
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function submitManagerAction(idx, empId, name) {
+  const act = document.getElementById(`actionSelect-${idx}`).value;
+  const note = document.getElementById(`actionNotes-${idx}`).value.trim() || 'No additional details provided.';
+  
+  try {
+    const res = await fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'MANAGER_ACTION',
+        sender: 'Line Manager',
+        recipient: 'HR & Analyst Team',
+        employee_id: empId,
+        employee_name: name,
+        message: act,
+        notes: note
+      })
+    });
+    if (res.status === 201) {
+      alert('Manager intervention logged. HR and Analyst notified!');
+      document.getElementById(`mgrForm-${idx}`).style.display = 'none';
+      loadNotifications();
+      // Reload dashboard in background to fetch updated feedback
+      const fresh = await fetch('/api/risk-overview');
+      allEmployees = await fresh.json();
+      applyFilters();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Programmatic ADK runner trigger
+async function runAgentAnalysis(empId, idx) {
+  const btn = document.getElementById(`agentBtn-${idx}`);
+  const loader = document.getElementById(`agentReportLoader-${idx}`);
+  const box = document.getElementById(`agentReportBox-${idx}`);
+
+  btn.style.display = 'none';
+  loader.style.display = 'block';
+  box.style.display = 'none';
+
+  try {
+    const res = await fetch(`/api/employee/${empId}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: window.currentUser.role })
+    });
+    const data = await res.json();
+    
+    loader.style.display = 'none';
+    box.style.display = 'block';
+    
+    // Format the markdown response slightly
+    box.innerHTML = formatMarkdownReport(data.report);
+  } catch (e) {
+    loader.style.display = 'none';
+    box.style.display = 'block';
+    box.innerHTML = `<span style="color:var(--critical)">Error running agents: ${e.message}</span>`;
+  }
+}
+
+function formatMarkdownReport(md) {
+  if (!md.includes("ATTRISENSE AI")) {
+    // If it's a standard markdown response from Gemini (when Gemini API is working!), 
+    // let's format basic markdown into nice HTML.
+    return md
+      .replace(/\n/g, '<br>')
+      .replace(/### (.*)/g, '<h4 style="font-size:1rem;color:var(--accent2);margin:1rem 0 0.5rem 0">$1</h4>')
+      .replace(/## (.*)/g, '<h3 style="font-size:1.15rem;color:var(--accent);margin:1.25rem 0 0.75rem 0">$1</h3>')
+      .replace(/# (.*)/g, '<h2 style="font-size:1.3rem;color:#fff;margin:1.5rem 0 1rem 0">$1</h2>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>');
+  }
+
+  try {
+    const empMatch = md.match(/EMPLOYEE:\s*([^\n\r]*)/);
+    const dateMatch = md.match(/ANALYSIS DATE:\s*([^\n\r]*)/);
+    const scoreMatch = md.match(/📊 ATTRITION RISK SCORE:\s*([^\n\r]*)/);
+    const windowMatch = md.match(/⏰ PREDICTION WINDOW:\s*([^\n\r]*)/);
+    const actionMatch = md.match(/⚠️ HR ACTION REQUIRED:\s*([^\n\r]*)/);
+
+    const employeeHeader = empMatch ? empMatch[1].trim() : "Employee Analysis";
+    const analysisDate = dateMatch ? dateMatch[1].trim() : new Date().toLocaleDateString();
+    const riskScoreRaw = scoreMatch ? scoreMatch[1].trim() : "0% — LOW";
+    const predWindow = windowMatch ? windowMatch[1].trim() : "Stable";
+    const actionRequiredRaw = actionMatch ? actionMatch[1].trim() : "MONITOR";
+
+    // Extract Sections
+    const driversIndex = md.indexOf("🔴 TOP RISK DRIVERS:");
+    const sentimentIndex = md.indexOf("😔 SENTIMENT ANALYSIS:");
+    const signalIndex = md.indexOf("📡 SIGNAL DASHBOARD:");
+    const retentionIndex = md.indexOf("💡 RETENTION PLAN:");
+    const insightIndex = md.indexOf("🎯 KEY INSIGHT:");
+    const hrActionIndex = md.indexOf("⚠️ HR ACTION REQUIRED:");
+
+    const riskDriversRaw = driversIndex !== -1 && sentimentIndex !== -1 ? md.substring(driversIndex + 20, sentimentIndex).trim() : "";
+    const sentimentRaw = sentimentIndex !== -1 && signalIndex !== -1 ? md.substring(sentimentIndex + 22, signalIndex).trim() : "";
+    const signalsRaw = signalIndex !== -1 && retentionIndex !== -1 ? md.substring(signalIndex + 20, retentionIndex).trim() : "";
+    const retentionRaw = retentionIndex !== -1 && insightIndex !== -1 ? md.substring(retentionIndex + 18, insightIndex).trim() : "";
+    const insightRaw = insightIndex !== -1 && hrActionIndex !== -1 ? md.substring(insightIndex + 15, hrActionIndex).trim() : "";
+
+    // Parse risk score & level (e.g. "76.8% — HIGH")
+    const scoreParts = riskScoreRaw.split("—");
+    const scoreVal = scoreParts[0] ? scoreParts[0].trim() : "0%";
+    const riskLevel = scoreParts[1] ? scoreParts[1].trim() : "LOW";
+    const riskLevelClass = `badge-${riskLevel}`;
+
+    // Drivers
+    const driversList = riskDriversRaw.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+    let driversHtml = '<ul style="list-style:none;padding-left:0;display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem;">';
+    driversList.forEach(drv => {
+      const cleanDrv = drv.replace(/^\d+\.\s*/, '');
+      driversHtml += `
+        <li style="display:flex;align-items:center;gap:0.6rem;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);padding:0.6rem 0.85rem;border-radius:10px;font-size:0.83rem;">
+          <span style="color:var(--critical);font-size:1.1rem;line-height:1;">🚨</span>
+          <span style="color:#cbd5e1">${cleanDrv}</span>
+        </li>
+      `;
+    });
+    driversHtml += '</ul>';
+
+    // Sentiment
+    const sentLines = sentimentRaw.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    let moodVal = "Neutral";
+    let sentScoreVal = "0.0";
+    let themesVal = "";
+    let nlpQuote = "";
+    sentLines.forEach(l => {
+      if (l.startsWith("Mood:")) {
+        const parts = l.split("|");
+        moodVal = parts[0].replace("Mood:", "").trim();
+        sentScoreVal = parts[1] ? parts[1].replace("Score:", "").trim() : "0.0";
+      } else if (l.startsWith("Themes:")) {
+        themesVal = l.replace("Themes:", "").trim();
+      } else {
+        nlpQuote = l;
+      }
+    });
+
+    // Signals
+    const signalLines = signalsRaw.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    let signalsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:0.6rem;margin-top:0.5rem;">';
+    signalLines.forEach(s => {
+      const cleanSignal = s.replace(/^-\s*/, '');
+      let statusColor = '#22c55e'; // low risk (green)
+      let dotColor = '#22c55e';
+      if (cleanSignal.includes('🔴')) { statusColor = 'rgba(239,68,68,0.3)'; dotColor = '#ef4444'; }
+      else if (cleanSignal.includes('🟠')) { statusColor = 'rgba(249,115,22,0.3)'; dotColor = '#f97316'; }
+      
+      const textNoEmoji = cleanSignal.replace(/🔴|🟠|🟢/g, '').trim();
+      const parts = textNoEmoji.split(":");
+      const paramName = parts[0] ? parts[0].trim() : "";
+      const paramContribution = parts[1] ? parts[1].trim() : "";
+
+      signalsHtml += `
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:0.6rem 0.85rem;border-radius:10px;display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;border-left:3px solid ${dotColor}">
+          <span style="color:#e2e8f0;font-weight:600;">${paramName}</span>
+          <span style="color:${dotColor};font-weight:700;font-size:0.75rem;">${paramContribution}</span>
+        </div>
+      `;
+    });
+    signalsHtml += '</div>';
+
+    // Retention Plan
+    const retentionLines = retentionRaw.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    let retentionHtml = '<div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.5rem;">';
+    retentionLines.forEach((line, index) => {
+      const cleanLine = line.replace(/^\d+\.\s*/, '');
+      const parts = cleanLine.split("|");
+      const actionName = parts[0] ? parts[0].trim() : "";
+      const owner = parts[1] ? parts[1].replace("Owner:", "").trim() : "N/A";
+      const timeline = parts[2] ? parts[2].replace("Timeline:", "").trim() : "N/A";
+
+      retentionHtml += `
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:0.85rem 1rem;border-radius:12px;display:flex;align-items:flex-start;gap:0.75rem;transition:transform 0.2s;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+          <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;box-shadow:0 3px 10px rgba(99,102,241,0.3);">${index+1}</div>
+          <div style="flex-grow:1;">
+            <div style="font-size:0.85rem;color:#f1f5f9;font-weight:700;line-height:1.4;">${actionName}</div>
+            <div style="display:flex;gap:1.5rem;margin-top:0.4rem;font-size:0.72rem;color:var(--muted);">
+              <span style="display:flex;align-items:center;gap:0.25rem;">👤 Owner: <strong style="color:var(--accent2)">${owner}</strong></span>
+              <span style="display:flex;align-items:center;gap:0.25rem;">⏱️ Timeline: <strong style="color:#eab308">${timeline}</strong></span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    retentionHtml += '</div>';
+
+    // HTML Output Structure
+    return `
+      <div style="font-family:'Inter',sans-serif;color:var(--text);line-height:1.6;display:flex;flex-direction:column;gap:1.5rem;">
+        <!-- Top banner info -->
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+          <div>
+            <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Employee Profile Under Analysis</div>
+            <div style="font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:-0.01em;">${employeeHeader}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Analysis Timestamp</div>
+            <div style="font-size:0.83rem;color:var(--accent2);font-weight:600;">${analysisDate}</div>
+          </div>
+        </div>
+
+        <!-- Risk Score & prediction window -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);padding:1.25rem;border-radius:16px;text-align:center;box-shadow:inset 0 1px 1px rgba(255,255,255,0.05);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.4rem;">Attrition Risk Score</div>
+            <div style="font-size:2.2rem;font-weight:800;line-height:1;margin-bottom:0.5rem;color:${riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? 'var(--critical)' : 'var(--low)'};letter-spacing:-0.02em;">${scoreVal}</div>
+            <span class="pulse-badge ${riskLevelClass}" style="padding:0.25rem 0.75rem">${riskLevel} RISK</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);padding:1.25rem;border-radius:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-shadow:inset 0 1px 1px rgba(255,255,255,0.05);">
+            <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.4rem;">Attrition Prediction Window</div>
+            <div style="font-size:1.05rem;font-weight:700;color:#fff;">⏱️ ${predWindow}</div>
+          </div>
+        </div>
+
+        <!-- Drivers & Signals Side-by-Side -->
+        <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:1.5rem;align-items:start;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--critical);margin-bottom:0.5rem;">🔴 Top Risk Drivers</div>
+            ${driversHtml}
+          </div>
+          <div>
+            <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent2);margin-bottom:0.5rem;">📡 Signal Dashboard</div>
+            ${signalsHtml}
+          </div>
+        </div>
+
+        <!-- Sentiment & Insight -->
+        <div style="background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.05);padding:1.25rem;border-radius:16px;box-shadow:inset 0 1px 1px rgba(255,255,255,0.02);">
+          <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#eab308;margin-bottom:0.75rem;">💬 NLP Sentiment Analysis</div>
+          <div style="display:flex;gap:1.5rem;font-size:0.83rem;border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:0.6rem;margin-bottom:0.75rem;color:var(--muted)">
+            <span>Pulse Mood: <strong style="color:#fff">${moodVal}</strong></span>
+            <span>Sentiment Score: <strong style="color:#fff">${sentScoreVal}</strong></span>
+            <span>Identified Themes: <strong style="color:var(--accent2)">${themesVal}</strong></span>
+          </div>
+          <div style="font-size:0.85rem;font-style:italic;color:#e2e8f0;background:rgba(0,0,0,0.2);padding:0.75rem 1rem;border-radius:10px;border-left:4px solid #eab308;line-height:1.5;">
+            ${nlpQuote}
+          </div>
+        </div>
+
+        <!-- Retention Plan -->
+        <div>
+          <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--low);margin-bottom:0.5rem;">💡 Recommended Retention Actions</div>
+          ${retentionHtml}
+        </div>
+
+        <!-- Key Insight & Escalation Banner -->
+        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);padding:1rem 1.25rem;border-radius:16px;margin-top:0.5rem;flex-wrap:wrap;gap:0.75rem;box-shadow:inset 0 1px 1px rgba(255,255,255,0.05);">
+          <div style="flex-grow:1;max-width:70%;">
+            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent2);font-weight:800;margin-bottom:0.15rem;">🎯 Key Insight Summary</div>
+            <div style="font-size:0.83rem;color:#cbd5e1;line-height:1.4;">${insightRaw}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.15rem;">Escalation protocol</div>
+            <div style="font-size:0.85rem;font-weight:800;color:${actionRequiredRaw.includes("YES") ? 'var(--critical)' : 'var(--low)'};">${actionRequiredRaw}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    console.error("Error formatting report html:", err);
+    return `<pre style="font-family:inherit;color:var(--text);font-size:0.85rem;white-space:pre-wrap;line-height:1.5;">${md}</pre>`;
+  }
+}
+
+// DATA FETCHES
+async function loadManagerAnalytics() {
+  const tbody = document.getElementById('managerTableBody');
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">Loading manager scorecard records...</td></tr>';
+  
+  try {
+    const res = await fetch('/api/manager-analytics');
+    const data = await res.json();
+    tbody.innerHTML = '';
+    
+    data.forEach(mgr => {
+      let badgeClass = "badge-LOW";
+      if (mgr.manager_status.includes("🔴")) badgeClass = "badge-CRITICAL";
+      else if (mgr.manager_status.includes("🟠")) badgeClass = "badge-HIGH";
+      else if (mgr.manager_status.includes("🟡")) badgeClass = "badge-MODERATE";
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><strong>${mgr.manager}</strong></td>
+        <td><span style="color:var(--muted)">${mgr.department}</span></td>
+        <td>${mgr.team_size} employees</td>
+        <td><strong style="color:var(--accent2)">${mgr.avg_risk_score}%</strong></td>
+        <td><span class="score-CRITICAL">${mgr.critical_count}</span></td>
+        <td><span class="score-HIGH">${mgr.high_count}</span></td>
+        <td><span class="score-MODERATE">${mgr.moderate_count}</span></td>
+        <td><span class="score-LOW">${mgr.low_count}</span></td>
+        <td><span class="pulse-badge ${badgeClass}">${mgr.manager_status.replace(/🔴|🟠|🟡|🟢/g, '')}</span></td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--critical);padding:2rem">Error: ${e.message}</td></tr>`;
+  }
+}
+
+async function loadNotifications() {
+  const timeline = document.getElementById('notifTimeline');
+  timeline.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem">Loading notification logs...</div>';
+
+  try {
+    const res = await fetch('/api/notifications');
+    const data = await res.json();
+    timeline.innerHTML = '';
+
+    // Filter notifications based on role
+    const role = window.currentUser.role;
+    let filteredNotifs = data;
+    
+    if (role === "MANAGER") {
+      // Tarun Gupta filters for reports to him
+      filteredNotifs = data.filter(n => n.recipient.includes(window.currentUser.name) || n.recipient === "Manager" || n.recipient.includes("Manager"));
+    } else if (role === "EMPLOYEE") {
+      filteredNotifs = data.filter(n => n.employee_id === window.currentUser.empId || n.sender.includes(window.currentUser.name));
+    }
+
+    // Count unread
+    const unread = filteredNotifs.filter(n => n.status === 'UNREAD').length;
+    const badge = document.getElementById('notifBadgeCount');
+    badge.textContent = unread;
+    badge.style.display = unread > 0 ? 'inline-block' : 'none';
+
+    if (filteredNotifs.length === 0) {
+      timeline.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem">No alerts in logs for your view.</div>';
+      return;
+    }
+
+    filteredNotifs.forEach(n => {
+      const item = document.createElement('div');
+      item.className = 'notif-item';
+      
+      let icon = '🔔';
+      if (n.type === 'ALARM') icon = '🚨';
+      else if (n.type === 'FORWARD') icon = '📨';
+      else if (n.type === 'MANAGER_ACTION') icon = '✍️';
+
+      const unreadBadge = n.status === 'UNREAD' ? '<span class="notif-badge-item unread">New Alert</span>' : '';
+      const notesBlock = n.notes ? `<div class="notif-notes">📝 <strong>Notes:</strong> ${n.notes}</div>` : '';
+
+      let actionsBlock = '';
+      if (role === 'ANALYST' && n.type === 'ALARM' && n.status === 'UNREAD') {
+        actionsBlock = `
+          <div class="notif-actions">
+            <button onclick="sendAlert('FORWARD', '${n.employee_id}', '${n.employee_name}', 'HR Team', 'Analyst forwarded critical flight risk alert for review.')" class="notif-btn primary">
+              📨 Forward File to HR
+            </button>
+          </div>`;
+      } else if (role === 'HR_ADMIN' && n.type === 'FORWARD' && n.status === 'UNREAD') {
+        actionsBlock = `
+          <div class="notif-actions">
+            <button onclick="sendAlert('ALARM', '${n.employee_id}', '${n.employee_name}', '${n.employee_name ? 'Tarun Gupta' : 'Manager'}', 'HR escalated critical turnover warning. Action required immediately.')" class="notif-btn primary">
+              🚨 Notify Line Manager
+            </button>
+          </div>`;
+      }
+
+      item.innerHTML = `
+        <div class="notif-icon ${n.type}">${icon}</div>
+        <div class="notif-body">
+          <div class="notif-meta">
+            <span class="notif-sender">${n.sender} ➔ ${n.recipient} ${unreadBadge}</span>
+            <span class="notif-time">${new Date(n.timestamp).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})}</span>
+          </div>
+          <div class="notif-msg">
+            <strong>${n.employee_name} (${n.employee_id})</strong>: ${n.message}
+          </div>
+          ${notesBlock}
+          ${actionsBlock}
+        </div>
+      `;
+      timeline.appendChild(item);
+    });
+  } catch(e) {
+    timeline.innerHTML = `<div style="text-align:center;color:var(--critical);padding:2rem">Error: ${e.message}</div>`;
+  }
+}
+
+// Main data fetch
+async function loadDashboard() {
+  try {
+    const [empRes, deptRes] = await Promise.all([
+      fetch('/api/risk-overview'), fetch('/api/department-heatmap')
+    ]);
+    allEmployees = await empRes.json();
+    const depts = await deptRes.json();
+
+    // Filter employees on load if Manager
+    let viewEmployees = allEmployees;
+    if (window.currentUser.role === "MANAGER") {
+      viewEmployees = allEmployees.filter(e => e.manager.includes(window.currentUser.name));
+    }
+
+    // KPIs based on user's view
+    const total    = viewEmployees.length;
+    const critical = viewEmployees.filter(e => e.level === 'CRITICAL').length;
+    const high     = viewEmployees.filter(e => e.level === 'HIGH').length;
+    const safe     = total - critical - high;
+    animateCounter(document.getElementById('kpi-total'), total);
+    animateCounter(document.getElementById('kpi-critical'), critical);
+    animateCounter(document.getElementById('kpi-high'), high);
+    animateCounter(document.getElementById('kpi-safe'), safe);
+
+    // Chart
+    const ctx = document.getElementById('riskChart').getContext('2d');
+    const moderate = viewEmployees.filter(e => e.level === 'MODERATE').length;
+    const low      = viewEmployees.filter(e => e.level === 'LOW').length;
+    
+    if (window.riskChartInstance) {
+      window.riskChartInstance.destroy();
+    }
+    window.riskChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Critical', 'High', 'Moderate', 'Low'],
+        datasets: [{ data: [critical, high, moderate, low],
+          backgroundColor: ['#ef4444','#f97316','#eab308','#22c55e'],
+          borderColor: '#0a0e1a', borderWidth: 3, hoverOffset: 8 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position:'bottom', labels:{ color:'#94a3b8', font:{size:11}, padding:14 } },
+          tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw} employees` } }
+        },
+        animation: { animateRotate: true, duration: 1200 }
+      }
+    });
+
+    // Department heatmap (only populated if visible)
+    if (window.currentUser.role !== "MANAGER") {
+      const deptGrid = document.getElementById('deptGrid');
+      deptGrid.innerHTML = '';
+      
+      const deptSel = document.getElementById('deptFilter');
+      if (deptSel.options.length <= 1) {
+        depts.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.department; opt.textContent = d.department;
+          deptSel.appendChild(opt);
+        });
+      }
+      
+      depts.forEach(d => {
+        const cell = document.createElement('div');
+        cell.className = 'dept-cell';
+        cell.style.background = `${d.color}22`;
+        cell.style.borderColor = `${d.color}55`;
+        cell.innerHTML = `
+          <div class="dept-name">${d.department}</div>
+          <div class="dept-score" style="color:${d.color}">${d.avg_risk_score}%</div>
+          <div class="pulse-badge badge-${d.avg_risk_level}" style="margin:0.4rem auto;display:inline-block">${d.avg_risk_level}</div>
+          <div class="dept-count">${d.employee_count} employees</div>
+          <div class="dept-count" style="margin-top:4px">
+            🔴${d.distribution.CRITICAL} 🟠${d.distribution.HIGH} 🟡${d.distribution.MODERATE} 🟢${d.distribution.LOW}
+          </div>`;
+        cell.onclick = () => {
+          document.getElementById('deptFilter').value = d.department;
+          applyFilters();
+          document.getElementById('empTableBody').scrollIntoView({behavior:'smooth'});
+        };
+        deptGrid.appendChild(cell);
+      });
+    }
+
+    // Initialize table filters
+    filteredEmployees = viewEmployees;
+    document.getElementById('filterCount').textContent = `${viewEmployees.length} employees`;
+    renderTable();
+    renderPagination();
+    
+    // Notifications count pull
+    loadNotificationsCountOnly();
+
+  } catch(err) {
+    console.error('Dashboard load error:', err);
+    document.getElementById('empTableBody').innerHTML =
+      `<tr><td colspan="8" style="text-align:center;color:var(--critical);padding:2rem">Error loading data: ${err.message}</td></tr>`;
+  }
+}
+
+async function loadNotificationsCountOnly() {
+  try {
+    const res = await fetch('/api/notifications');
+    const data = await res.json();
+    
+    const role = window.currentUser.role;
+    let filtered = data;
+    if (role === "MANAGER") {
+      filtered = data.filter(n => n.recipient.includes(window.currentUser.name) || n.recipient === "Manager" || n.recipient.includes("Manager"));
+    } else if (role === "EMPLOYEE") {
+      filtered = data.filter(n => n.employee_id === window.currentUser.empId || n.sender.includes(window.currentUser.name));
+    }
+    
+    const unread = filtered.filter(n => n.status === 'UNREAD').length;
+    const badge = document.getElementById('notifBadgeCount');
+    badge.textContent = unread;
+    badge.style.display = unread > 0 ? 'inline-block' : 'none';
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function closeModal() {
+  document.getElementById('addModal').style.display = 'none';
+  document.getElementById('addResult').style.display = 'none';
+}
+
+async function submitEmployee() {
+  const btn = document.getElementById('submitBtn');
+  const resultEl = document.getElementById('addResult');
+
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { alert('Please enter the employee name.'); return; }
+
+  const payload = {
+    name,
+    department:            document.getElementById('f_dept').value,
+    tenure_years:          parseFloat(document.getElementById('f_tenure').value),
+    performance_trend:     document.getElementById('f_perf').value,
+    salary_percentile:     parseInt(document.getElementById('f_sal').value),
+    absenteeism_rate:      parseFloat(document.getElementById('f_absent').value),
+    meeting_participation: parseFloat(document.getElementById('f_meeting').value),
+    collaboration_index:   parseFloat(document.getElementById('f_collab').value),
+    sentiment_score:       parseFloat(document.getElementById('f_sentiment').value),
+    manager_scorecard:     parseFloat(document.getElementById('f_mgr').value),
+    years_since_promotion: parseFloat(document.getElementById('f_promo').value),
+    training_count_ytd:    parseInt(document.getElementById('f_train').value),
+    certifications:        parseInt(document.getElementById('f_cert').value),
+    awards_count:          parseInt(document.getElementById('f_awards').value),
+    internal_job_searches: parseInt(document.getElementById('f_jobs').value),
+    team_outings_attended: parseInt(document.getElementById('f_outings').value),
+    mood_index:            parseFloat(document.getElementById('f_mood').value),
+    cross_functional_work: document.getElementById('f_cross').checked,
+    base_location_match:   document.getElementById('f_loc').checked,
+    feedback:              document.getElementById('f_feedback').value || 'No feedback provided.',
+  };
+
+  btn.textContent = '⏳ Computing...';
+  btn.disabled = true;
+
+  try {
+    const res  = await fetch('/api/employee', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+
+    if (res.status === 201) {
+      const color = RISK_COLORS[data.risk_level] || '#6366f1';
+      resultEl.style.display = 'block';
+      resultEl.style.background = `${color}22`;
+      resultEl.style.border = `1px solid ${color}55`;
+      resultEl.style.color = color;
+      resultEl.innerHTML = `✅ <strong>${data.name}</strong> added as <strong>${data.employee_id}</strong> — Risk: <strong>${data.risk_level} (${data.risk_score}%)</strong><br>
+        <span style="font-weight:400;font-size:0.78rem;color:#94a3b8">${data.prediction_window}</span>`;
+
+      if (data.risk_level === 'CRITICAL' || data.risk_level === 'HIGH') {
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'ALARM',
+            sender: 'System Monitor',
+            recipient: 'Analyst',
+            employee_id: data.employee_id,
+            employee_name: data.name,
+            message: `Employee ${data.employee_id} risk score calculated at ${data.risk_score}% (${data.risk_level}).`,
+            notes: 'High-risk employee added via manual portal entry.'
+          })
+        });
+      }
+
+      setTimeout(() => { loadDashboard(); closeModal(); }, 1800);
+    } else {
+      resultEl.style.display = 'block';
+      resultEl.style.background = 'rgba(239,68,68,0.15)';
+      resultEl.style.border = '1px solid #ef4444';
+      resultEl.style.color = '#ef4444';
+      resultEl.textContent = `Error: ${data.error}`;
+    }
+  } catch(e) {
+    alert('Network error: ' + e.message);
+  } finally {
+    btn.textContent = '⚡ Compute Risk & Add';
+    btn.disabled = false;
+  }
+}
+
+// Run checks on load
+checkLogin();
+</script>
+</body>
+</html>
