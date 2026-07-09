@@ -167,6 +167,7 @@ def _generate_employees() -> dict:
             outings         = rng.randint(0, 2)
             loc_match       = rng.random() < 0.30
             perf_trend      = rng.choice(_PERFORMANCE_BY_TIER["CRITICAL"])
+            weekly_hours    = round(rng.uniform(55.0, 68.0), 1)
         elif tier == "HIGH":
             absenteeism     = round(rng.uniform(0.10, 0.22), 2)
             sentiment       = round(rng.uniform(-0.55, -0.10), 2)
@@ -184,6 +185,7 @@ def _generate_employees() -> dict:
             outings         = rng.randint(1, 4)
             loc_match       = rng.random() < 0.55
             perf_trend      = rng.choice(_PERFORMANCE_BY_TIER["HIGH"])
+            weekly_hours    = round(rng.uniform(48.0, 58.0), 1)
         elif tier == "MODERATE":
             absenteeism     = round(rng.uniform(0.04, 0.14), 2)
             sentiment       = round(rng.uniform(-0.20, 0.25), 2)
@@ -201,6 +203,7 @@ def _generate_employees() -> dict:
             outings         = rng.randint(2, 6)
             loc_match       = rng.random() < 0.75
             perf_trend      = rng.choice(_PERFORMANCE_BY_TIER["MODERATE"])
+            weekly_hours    = round(rng.uniform(42.0, 48.0), 1)
         else:  # LOW
             absenteeism     = round(rng.uniform(0.00, 0.06), 2)
             sentiment       = round(rng.uniform(0.25, 1.00), 2)
@@ -218,6 +221,7 @@ def _generate_employees() -> dict:
             outings         = rng.randint(4, 10)
             loc_match       = rng.random() < 0.90
             perf_trend      = rng.choice(_PERFORMANCE_BY_TIER["LOW"])
+            weekly_hours    = round(rng.uniform(38.0, 44.0), 1)
 
         feedback = rng.choice(_FEEDBACK_TEMPLATES[tier]).format(tenure=int(tenure))
 
@@ -273,6 +277,7 @@ def _generate_employees() -> dict:
             "sentiment_score": sentiment,
             "feedback": feedback,
             "mood_index": mood,
+            "weekly_hours": weekly_hours,
         }
 
     return employees
@@ -351,6 +356,11 @@ DRIVER_ACTIONS = {
         "Organize next team outing/virtual coffee within 2 weeks",
         "Include in next informal team activity — ensure they feel invited",
     ],
+    "long_working_hours": [
+        "Implement mandatory cap on weekend overtime",
+        "Redistribute project workload across other team members",
+        "Introduce flexible scheduling or compensatory time off",
+    ],
 }
 
 
@@ -359,23 +369,23 @@ DRIVER_ACTIONS = {
 # ─────────────────────────────────────────────────────────────────────────────
 def _calculate_score(emp: dict) -> dict:
     """
-    Computes weighted Attrition Risk Score across 14 parameters.
+    Computes weighted Attrition Risk Score across 15 parameters.
     Returns total score and per-parameter breakdown.
     """
     breakdown = {}
 
-    # 1. Absenteeism (12%)
-    breakdown["absenteeism"] = round(min(emp["absenteeism_rate"] / 0.25, 1.0) * 12, 2)
-    # 2. Sentiment (10%)
-    breakdown["sentiment_score"] = round((1 - (emp["sentiment_score"] + 1) / 2) * 10, 2)
-    # 3. Performance trend (10%)
+    # 1. Absenteeism (10%)
+    breakdown["absenteeism"] = round(min(emp["absenteeism_rate"] / 0.25, 1.0) * 10, 2)
+    # 2. Sentiment (9%)
+    breakdown["sentiment_score"] = round((1 - (emp["sentiment_score"] + 1) / 2) * 9, 2)
+    # 3. Performance trend (9%)
     perf_map = {
         "high_performer": 0.0, "improving": 0.2, "stable": 0.45,
         "declining": 0.8, "low_performer": 1.0,
     }
-    breakdown["performance_trend"] = round(perf_map.get(emp["performance_trend"], 0.5) * 10, 2)
-    # 4. Compensation gap (10%)
-    breakdown["compensation_gap"] = round((1 - emp["salary_percentile"] / 100) * 10, 2)
+    breakdown["performance_trend"] = round(perf_map.get(emp["performance_trend"], 0.5) * 9, 2)
+    # 4. Compensation gap (9%)
+    breakdown["compensation_gap"] = round((1 - emp["salary_percentile"] / 100) * 9, 2)
     # 5. Internal job searches (8%)
     breakdown["internal_job_searches"] = round(min(emp["internal_job_searches"] / 15, 1.0) * 8, 2)
     # 6. Manager scorecard (8%) — lower score = higher risk
@@ -396,6 +406,9 @@ def _calculate_score(emp: dict) -> dict:
     breakdown["cross_functional_work"] = 0.0 if emp["cross_functional_work"] else 3.0
     # 14. Team social engagement (2%)
     breakdown["team_social"] = round(max(0.0, 1 - emp["team_outings_attended"] / 8) * 2, 2)
+    # 15. Long Working Hours (5%)
+    weekly_hours = emp.get("weekly_hours", 40.0)
+    breakdown["long_working_hours"] = round(min(max(0.0, weekly_hours - 40) / 20, 1.0) * 5, 2)
 
     total = round(min(sum(breakdown.values()), 100.0), 1)
     return {"total": total, "breakdown": breakdown}

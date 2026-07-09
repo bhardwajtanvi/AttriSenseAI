@@ -386,38 +386,78 @@
       <label class="flabel" style="margin-bottom:0.6rem">Select Corporate Persona to Proceed:</label>
       
       <!-- HR ADMIN -->
-      <div onclick="loginAs('Kavita Nair', 'HR_ADMIN', 'HR', '')" class="persona-btn">
+      <div onclick="loginAs('HR Department User', 'HR_ADMIN', 'HR', '')" class="persona-btn">
         <span class="persona-avatar">👩‍💼</span>
         <div>
-          <div class="persona-name">Kavita Nair</div>
-          <div class="persona-role">HR Director (Role: HR Admin)</div>
+          <div class="persona-name">HR Department Portal</div>
+          <div class="persona-role">HR Admins, HR Business Partners & HR Operations</div>
         </div>
       </div>
       
       <!-- ANALYST -->
-      <div onclick="loginAs('Ashish Wagh', 'ANALYST', 'Data Science', '')" class="persona-btn">
+      <div onclick="loginAs('People Analytics User', 'ANALYST', 'Data Science', '')" class="persona-btn">
         <span class="persona-avatar">📊</span>
         <div>
-          <div class="persona-name">Ashish Wagh</div>
-          <div class="persona-role">Attrition Risk Analyst (Role: Risk Analyst)</div>
+          <div class="persona-name">Attrition Analytics Portal</div>
+          <div class="persona-role">Data Scientists, People Analysts & Risk Advisors</div>
         </div>
       </div>
       
       <!-- MANAGER -->
-      <div onclick="loginAs('Tarun Gupta', 'MANAGER', 'Engineering', '')" class="persona-btn">
+      <div onclick="loginAs('Line Manager User', 'MANAGER', 'Engineering', '')" class="persona-btn">
         <span class="persona-avatar">👨‍💻</span>
         <div>
-          <div class="persona-name">Tarun Gupta</div>
-          <div class="persona-role">Engineering Lead (Role: Manager)</div>
+          <div class="persona-name">Line Manager & Lead Portal</div>
+          <div class="persona-role">Engineering Leads, Project Managers & Line Managers</div>
         </div>
       </div>
       
       <!-- EMPLOYEE -->
-      <div onclick="loginAs('Arjun Sharma', 'EMPLOYEE', 'Engineering', 'EMP0001')" class="persona-btn">
-        <span class="persona-avatar">💻</span>
-        <div>
-          <div class="persona-name">Arjun Sharma</div>
-          <div class="persona-role">Senior Developer (Role: Employee - EMP0001)</div>
+      <div class="persona-btn" id="employeePersonaOption" style="flex-direction:column;align-items:stretch;cursor:default;">
+        <div style="display:flex;align-items:center;width:100%;cursor:pointer;" onclick="toggleEmployeeList(event)">
+          <span class="persona-avatar">💻</span>
+          <div style="flex-grow:1;">
+            <div class="persona-name">Employee Career Portal</div>
+            <div class="persona-role">Individual Employee Self-Service Cockpit</div>
+          </div>
+          <span id="empListChevron" style="font-size:0.8rem;color:var(--muted);transition:transform 0.2s;margin-left:0.5rem;">▼</span>
+        </div>
+        <div id="employeeSelectGrid" style="display:none;flex-direction:column;gap:0.4rem;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid rgba(255,255,255,0.06);text-align:left;">
+          <style>
+            .sub-persona-row {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 0.45rem 0.65rem;
+              background: rgba(255,255,255,0.03);
+              border: 1px solid rgba(255,255,255,0.04);
+              border-radius: 6px;
+              font-size: 0.78rem;
+              color: #94a3b8;
+              cursor: pointer;
+              transition: all 0.2s ease;
+            }
+            .sub-persona-row:hover {
+              background: rgba(99,102,241,0.12) !important;
+              color: #fff !important;
+              border-color: rgba(99,102,241,0.3) !important;
+            }
+          </style>
+          <div onclick="loginAs('Arjun Sharma', 'EMPLOYEE', 'Engineering', 'EMP0001')" class="sub-persona-row">
+            <span>Arjun Sharma (EMP0001)</span> <span class="badge badge-CRITICAL" style="font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:4px;">CRITICAL</span>
+          </div>
+          <div onclick="loginAs('Monika Arora', 'EMPLOYEE', 'Engineering', 'EMP0002')" class="sub-persona-row">
+            <span>Monika Arora (EMP0002)</span> <span class="badge badge-HIGH" style="font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:4px;">HIGH</span>
+          </div>
+          <div onclick="loginAs('Aarav Nair', 'EMPLOYEE', 'Product', 'EMP0003')" class="sub-persona-row">
+            <span>Aarav Nair (EMP0003)</span> <span class="badge badge-MODERATE" style="font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:4px;">MODERATE</span>
+          </div>
+          <div onclick="loginAs('Aditya Joshi', 'EMPLOYEE', 'Sales', 'EMP0004')" class="sub-persona-row">
+            <span>Aditya Joshi (EMP0004)</span> <span class="badge badge-LOW" style="font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:4px;">LOW</span>
+          </div>
+          <div onclick="loginAs('Amrita Sen', 'EMPLOYEE', 'Finance', 'EMP0005')" class="sub-persona-row">
+            <span>Amrita Sen (EMP0005)</span> <span class="badge badge-LOW" style="font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:4px;">LOW</span>
+          </div>
         </div>
       </div>
     </div>
@@ -747,7 +787,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
           <div>
             <h2 style="font-size:1.2rem;font-weight:800;color:#fff">➕ Add New Employee</h2>
-            <p style="font-size:0.75rem;color:#64748b;margin-top:2px">Enter all 14 attrition signal parameters — risk score computed instantly</p>
+            <p style="font-size:0.75rem;color:#64748b;margin-top:2px">Enter all 15 attrition signal parameters — risk score computed instantly</p>
           </div>
           <button onclick="closeModal()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-size:1rem;">✕</button>
         </div>
@@ -790,6 +830,7 @@
             <div><label class="flabel">Internal Job Searches *</label><input id="f_jobs" class="finput" type="number" min="0" max="30" value="2"/></div>
             <div><label class="flabel">Team Outings Attended *</label><input id="f_outings" class="finput" type="number" min="0" max="15" value="4"/></div>
             <div><label class="flabel">Mood Index (1–10) *</label><input id="f_mood" class="finput" type="number" min="1" max="10" step="0.1" value="6.5"/></div>
+            <div><label class="flabel">Weekly Working Hours *</label><input id="f_hours" class="finput" type="number" min="1" max="100" step="0.1" value="40"/></div>
             <div style="display:flex;gap:1rem;">
               <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:#94a3b8;cursor:pointer;">
                 <input id="f_cross" type="checkbox" checked style="accent-color:#6366f1;"> Cross-functional Work
@@ -882,13 +923,14 @@
               <div><label class="flabel">Trainings (YTD)</label><input id="e_train" class="finput" type="number" /></div>
               <div><label class="flabel">Awards Count</label><input id="e_awards" class="finput" type="number" /></div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
               <div><label class="flabel">Cross-Functional Work</label>
                 <select id="e_cross" class="finput">
                   <option value="true">Yes</option>
                   <option value="false">No</option>
                 </select></div>
               <div><label class="flabel">Team Outings Attended</label><input id="e_outings" class="finput" type="number" /></div>
+              <div><label class="flabel">Weekly Working Hours</label><input id="e_hours" class="finput" type="number" step="0.1" /></div>
             </div>
           </div>
 
@@ -1011,6 +1053,19 @@ function loginAs(name, role, dept, empId) {
   checkLogin();
 }
 
+function toggleEmployeeList(event) {
+  if (event) event.stopPropagation();
+  const grid = document.getElementById("employeeSelectGrid");
+  const chev = document.getElementById("empListChevron");
+  if (grid.style.display === "none" || !grid.style.display) {
+    grid.style.display = "flex";
+    chev.style.transform = "rotate(180deg)";
+  } else {
+    grid.style.display = "none";
+    chev.style.transform = "rotate(0deg)";
+  }
+}
+
 function logout() {
   localStorage.removeItem("activeUser");
   checkLogin();
@@ -1046,7 +1101,8 @@ function applyRolePermissions() {
     managersTab.style.display = "none";
     fabBtn.style.display = "none";
     document.getElementById("aggregateChartsSection").style.display = "none"; // Hide aggregate metrics from managers
-    document.getElementById("tableTitleText").textContent = `👤 Attrition Risk Telemetry — Reportees for ${window.currentUser.name}`;
+    const displayMgrName = window.currentUser.name === "Line Manager User" ? "Engineering Lead" : window.currentUser.name;
+    document.getElementById("tableTitleText").textContent = `👤 Attrition Risk Telemetry — Reportees for ${displayMgrName}`;
   } else if (role === "EMPLOYEE") {
     // Hide standard dashboards completely
     document.getElementById("dashboardWorkspace").style.display = "none";
@@ -1070,9 +1126,12 @@ function applyFilters() {
   const dept   = document.getElementById('deptFilter').value;
 
   filteredEmployees = allEmployees.filter(e => {
-    // Tarun Gupta manager restriction
-    if (window.currentUser.role === "MANAGER" && !e.manager.includes(window.currentUser.name)) {
-      return false;
+    // Manager restriction (supports Line Manager User fallback to Tarun Gupta team)
+    if (window.currentUser.role === "MANAGER") {
+      const filterMgrName = window.currentUser.name === "Line Manager User" ? "Tarun Gupta" : window.currentUser.name;
+      if (!e.manager.includes(filterMgrName)) {
+        return false;
+      }
     }
     
     const matchSearch = !search ||
@@ -1287,6 +1346,7 @@ async function openEditModal(empId) {
     document.getElementById("e_awards").value = emp.awards_count;
     document.getElementById("e_cross").value = emp.cross_functional_work ? "true" : "false";
     document.getElementById("e_outings").value = emp.team_outings_attended;
+    document.getElementById("e_hours").value = emp.weekly_hours || 40.0;
     document.getElementById("e_feedback").value = emp.feedback;
     
     // Show/hide and enable/disable sections based on role
@@ -1369,6 +1429,7 @@ async function submitEditEmployee() {
       awards_count: parseInt(document.getElementById("e_awards").value),
       cross_functional_work: document.getElementById("e_cross").value === "true",
       team_outings_attended: parseInt(document.getElementById("e_outings").value),
+      weekly_hours: parseFloat(document.getElementById("e_hours").value || 40.0),
       feedback: document.getElementById("e_feedback").value
     }
   };
@@ -1457,7 +1518,8 @@ async function viewEmployeeProfile(empId) {
       { label: "Awards Count", val: emp.awards_count },
       { label: "Location Match", val: emp.base_location_match ? "Yes ✅" : "No ❌" },
       { label: "Cross-Functional Work", val: emp.cross_functional_work ? "Yes ✅" : "No ❌" },
-      { label: "Team Outings Attended", val: emp.team_outings_attended }
+      { label: "Team Outings Attended", val: emp.team_outings_attended },
+      { label: "Weekly Working Hours", val: `${emp.weekly_hours} hrs/week` }
     ];
     
     params.forEach(p => {
@@ -2252,6 +2314,7 @@ async function submitEmployee() {
     mood_index:            parseFloat(document.getElementById('f_mood').value),
     cross_functional_work: document.getElementById('f_cross').checked,
     base_location_match:   document.getElementById('f_loc').checked,
+    weekly_hours:          parseFloat(document.getElementById('f_hours').value || 40.0),
     feedback:              document.getElementById('f_feedback').value || 'No feedback provided.',
   };
 

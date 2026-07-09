@@ -178,7 +178,7 @@ async def edit_employee(employee_id: str, request: Request):
     # Fields that can be edited by MANAGER:
     manager_fields = ["manager_scorecard", "feedback", "mood_index"]
     # Fields that can be edited by both HR and Analyst:
-    common_fields = ["training_count_ytd", "certifications", "awards_count", "internal_job_searches", "cross_functional_work", "team_outings_attended"]
+    common_fields = ["training_count_ytd", "certifications", "awards_count", "internal_job_searches", "cross_functional_work", "team_outings_attended", "weekly_hours"]
 
     allowed_updates = []
     if role == "HR_ADMIN":
@@ -563,10 +563,11 @@ async def add_employee(request: Request):
         "awards_count":          int(body["awards_count"]),
         "internal_job_searches": int(body["internal_job_searches"]),
         "cross_functional_work": bool(body["cross_functional_work"]),
-        "team_outings_attended": int(body["team_outings_attended"]),
-        "sentiment_score":       float(body["sentiment_score"]),
+        "team_outings_attended": int(body.get("team_outings_attended", 0)),
+        "sentiment_score":       float(body.get("sentiment_score", 0.0)),
         "feedback":              str(body["feedback"]),
         "mood_index":            float(body["mood_index"]),
+        "weekly_hours":          float(body.get("weekly_hours", 40.0)),
     }
 
     # Assign Manager based on department rules
