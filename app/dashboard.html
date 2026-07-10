@@ -1039,10 +1039,11 @@ function applyRolePermissions() {
   const profileInterventionBox = document.getElementById("profileInterventionBox");
   
   if (role === "HR_ADMIN") {
-    // HR Admin: ONLY gets notifications, read-only dashboard access (no edits/adds)
+    // HR Admin: ONLY gets notifications (cannot view register or edit)
     managersTab.style.display = "none";
+    analyticsTab.style.display = "none";
+    notificationsTab.style.display = "inline-block";
     fabBtn.style.display = "none";
-    document.getElementById("aggregateChartsSection").style.display = "grid";
     if (profileEditBtn) profileEditBtn.style.display = "none";
     if (profileInterventionBox) profileInterventionBox.style.display = "none";
     switchTab('notifications'); // Route HR directly to Notification center on login
@@ -1076,14 +1077,6 @@ function applyFilters() {
   const dept   = document.getElementById('deptFilter').value;
 
   filteredEmployees = allEmployees.filter(e => {
-    // Manager restriction (supports Line Manager User fallback to Tarun Gupta team)
-    if (window.currentUser.role === "MANAGER") {
-      const filterMgrName = window.currentUser.name === "Line Manager User" ? "Tarun Gupta" : window.currentUser.name;
-      if (!e.manager.includes(filterMgrName)) {
-        return false;
-      }
-    }
-    
     const matchSearch = !search ||
       e.name.toLowerCase().includes(search) ||
       e.employee_id.toLowerCase().includes(search);
@@ -1846,6 +1839,61 @@ async function shareReportToHR(empId, btnId) {
   }
 }
 
+async function hrGeneratePlan(empId, empName, btnId, reportBoxId, loaderId) {
+  const btn = document.getElementById(btnId);
+  const loader = document.getElementById(loaderId);
+  const box = document.getElementById(reportBoxId);
+  
+  if (btn) btn.disabled = true;
+  if (loader) loader.style.display = 'block';
+  if (box) box.style.display = 'none';
+
+  try {
+    const res = await fetch(`/api/employee/${empId}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: 'HR_ADMIN' })
+    });
+    const data = await res.json();
+    
+    if (loader) loader.style.display = 'none';
+    if (box) {
+      box.style.display = 'block';
+      box.innerHTML = formatMarkdownReport(data.report);
+    }
+    
+    // Automatically log this back to the Manager so "Manager should be seeing that data"
+    const notifyRes = await fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'MANAGER_ACTION',
+        sender: 'HR Department (AI Advisor)',
+        recipient: 'Tarun Gupta',
+        employee_id: empId,
+        employee_name: empName,
+        message: `HR generated Attrition Prevention Plan for ${empName}.`,
+        notes: `AI Playbook: Personalized retention action generated. Direct guidelines and mitigations logged for Line Manager execution.`
+      })
+    });
+    
+    if (btn) {
+      btn.textContent = "✓ Plan Generated & Shared with Manager";
+      btn.style.background = "var(--low)";
+      btn.style.borderColor = "var(--low)";
+    }
+    
+    loadNotifications();
+  } catch (e) {
+    if (loader) loader.style.display = 'none';
+    if (box) {
+      box.style.display = 'block';
+      box.innerHTML = `<span style="color:var(--critical)">Error generating plan: ${e.message}</span>`;
+    }
+    if (btn) btn.disabled = false;
+  }
+}
+
 function formatMarkdownReport(md) {
   if (!md.includes("ATTRISENSE AI")) {
     // If it's a standard markdown response from Gemini (when Gemini API is working!), 
@@ -2137,12 +2185,24 @@ async function loadNotifications() {
               📨 Forward File to HR
             </button>
           </div>`;
-      } else if (role === 'HR_ADMIN' && n.type === 'FORWARD' && n.status === 'UNREAD') {
+      } else if (role === 'HR_ADMIN' && n.type === 'FORWARD') {
+        const genBtnId = `hrGenBtn-${n.employee_id}`;
+        const reportBoxId = `hrReportBox-${n.employee_id}`;
+        const loaderId = `hrLoader-${n.employee_id}`;
         actionsBlock = `
-          <div class="notif-actions">
-            <button onclick="sendAlert('ALARM', '${n.employee_id}', '${n.employee_name}', '${n.employee_name ? 'Tarun Gupta' : 'Manager'}', 'HR escalated critical turnover warning. Action required immediately.')" class="notif-btn primary">
-              🚨 Notify Line Manager
-            </button>
+          <div class="notif-actions" style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; width:100%">
+            <div style="display:flex; gap:0.5rem">
+              <button onclick="hrGeneratePlan('${n.employee_id}', '${n.employee_name}', '${genBtnId}', '${reportBoxId}', '${loaderId}')" id="${genBtnId}" class="notif-btn primary" style="background:var(--accent); border-color:var(--accent)">
+                ⚡ Generate Attrition Prevention Plan (AI)
+              </button>
+              <button onclick="sendAlert('ALARM', '${n.employee_id}', '${n.employee_name}', 'Tarun Gupta', 'HR escalated critical turnover warning. Action required immediately.')" class="notif-btn">
+                🚨 Notify Line Manager
+              </button>
+            </div>
+            <div id="${loaderId}" style="display:none; color:var(--accent2); font-size:0.78rem; margin-top:0.5rem">
+              <span class="spinner"></span> Running Google ADK Orchestrator & sub-agents to synthesize personalized prevention playbook...
+            </div>
+            <div id="${reportBoxId}" class="agent-report-box" style="display:none; margin-top:0.5rem; max-height: 250px; overflow-y: auto;"></div>
           </div>`;
       }
 
@@ -2176,12 +2236,7 @@ async function loadDashboard() {
     allEmployees = await empRes.json();
     const depts = await deptRes.json();
 
-    // Filter employees on load if Manager (map Line Manager User to Tarun Gupta reportees)
     let viewEmployees = allEmployees;
-    if (window.currentUser.role === "MANAGER") {
-      const filterMgrName = window.currentUser.name === "Line Manager User" ? "Tarun Gupta" : window.currentUser.name;
-      viewEmployees = allEmployees.filter(e => e.manager.includes(filterMgrName));
-    }
 
     // KPIs based on user's view
     const total    = viewEmployees.length;
