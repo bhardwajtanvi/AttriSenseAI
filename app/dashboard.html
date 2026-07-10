@@ -1837,24 +1837,20 @@ async function shareReportToHR(empId, btnId) {
   }
 }
 
-async function hrGenerateSpecificPlan(empId, empName, planType, btnId, reportBoxId, loaderId) {
+async function hrGeneratePlan(empId, empName, btnId, reportBoxId, loaderId) {
   const btn = document.getElementById(btnId);
   const loader = document.getElementById(loaderId);
   const box = document.getElementById(reportBoxId);
   
+  if (btn) btn.disabled = true;
   if (loader) loader.style.display = 'block';
   if (box) box.style.display = 'none';
-
-  const rootActionsDiv = btn ? btn.closest('.notif-actions') : null;
-  if (rootActionsDiv) {
-    rootActionsDiv.querySelectorAll('button').forEach(b => b.disabled = true);
-  }
 
   try {
     const res = await fetch(`/api/employee/${empId}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role: 'HR_ADMIN', plan_type: planType })
+      body: JSON.stringify({ role: 'HR_ADMIN', plan_type: 'auto' })
     });
     const data = await res.json();
     
@@ -1863,6 +1859,10 @@ async function hrGenerateSpecificPlan(empId, empName, planType, btnId, reportBox
       box.style.display = 'block';
       box.innerHTML = formatMarkdownReport(data.report);
     }
+    
+    // Automatically determine what type of plan was generated to notify the manager
+    const isHrPlan = data.report.includes("HR DIRECT RETENTION PLAN");
+    const planLabel = isHrPlan ? "HR Direct Action Plan (Salary/Pulse)" : "Manager 1-on-1 Action Plan";
     
     // Automatically log this back to the Manager so "Manager should be seeing that data"
     const notifyRes = await fetch('/api/notifications', {
@@ -1874,9 +1874,7 @@ async function hrGenerateSpecificPlan(empId, empName, planType, btnId, reportBox
         recipient: 'Tarun Gupta',
         employee_id: empId,
         employee_name: empName,
-        message: planType === 'MANAGER_coaching' 
-          ? `HR generated Manager 1-on-1 Action Plan for ${empName}.` 
-          : `HR generated HR Direct Action Plan (Salary/Pulse) for ${empName}.`,
+        message: `HR generated and approved ${planLabel} for ${empName}.`,
         notes: data.report
       })
     });
@@ -1894,9 +1892,7 @@ async function hrGenerateSpecificPlan(empId, empName, planType, btnId, reportBox
       box.style.display = 'block';
       box.innerHTML = `<span style="color:var(--critical)">Error generating plan: ${e.message}</span>`;
     }
-    if (rootActionsDiv) {
-      rootActionsDiv.querySelectorAll('button').forEach(b => b.disabled = false);
-    }
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -2181,7 +2177,7 @@ async function loadNotifications() {
       else if (n.type === 'MANAGER_ACTION') icon = '✍️';
 
       const unreadBadge = n.status === 'UNREAD' ? '<span class="notif-badge-item unread">New Alert</span>' : '';
-      const notesBlock = n.notes ? `<div class="notif-notes">📝 <strong>Notes:</strong> ${n.notes}</div>` : '';
+      const notesBlock = n.notes ? `<div class="notif-notes" style="margin-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06); padding-top:0.75rem;">📋 <strong>Plan Details & Recommendations:</strong><br><div style="font-family:monospace; font-size:0.8rem; line-height:1.5; white-space:pre-wrap; margin-top:0.5rem; background:rgba(0,0,0,0.25); padding:0.75rem; border-radius:8px; border-left:3px solid var(--accent); color:#cbd5e1;">${n.notes}</div></div>` : '';
 
       let actionsBlock = '';
       if (role === 'ANALYST' && n.type === 'ALARM' && n.status === 'UNREAD') {
@@ -2192,25 +2188,20 @@ async function loadNotifications() {
             </button>
           </div>`;
       } else if (role === 'HR_ADMIN' && n.type === 'FORWARD') {
-        const mgrPlanBtnId = `mgrPlanBtn-${n.employee_id}`;
-        const hrPlanBtnId = `hrPlanBtn-${n.employee_id}`;
+        const genBtnId = `hrGenBtn-${n.employee_id}`;
         const reportBoxId = `hrReportBox-${n.employee_id}`;
         const loaderId = `hrLoader-${n.employee_id}`;
         actionsBlock = `
           <div class="notif-actions" style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; width:100%">
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.25rem;">🔎 Real-Time Prevention Actions based on Manager's Shared File:</div>
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap">
-              <button onclick="hrGenerateSpecificPlan('${n.employee_id}', '${n.employee_name}', 'MANAGER_coaching', '${mgrPlanBtnId}', '${reportBoxId}', '${loaderId}')" id="${mgrPlanBtnId}" class="notif-btn primary" style="background:var(--accent); border-color:var(--accent)">
-                👨‍💻 Generate Manager 1-on-1 Plan (AI)
-              </button>
-              <button onclick="hrGenerateSpecificPlan('${n.employee_id}', '${n.employee_name}', 'HR_compensation', '${hrPlanBtnId}', '${reportBoxId}', '${loaderId}')" id="${hrPlanBtnId}" class="notif-btn primary" style="background:var(--accent2); border-color:var(--accent2); color:#fff">
-                👩‍💼 Generate HR Direct Plan (AI)
+            <div style="display:flex; gap:0.5rem">
+              <button onclick="hrGeneratePlan('${n.employee_id}', '${n.employee_name}', '${genBtnId}', '${reportBoxId}', '${loaderId}')" id="${genBtnId}" class="notif-btn primary" style="background:var(--accent); border-color:var(--accent)">
+                ⚡ Generate Attrition Prevention Plan (AI)
               </button>
             </div>
             <div id="${loaderId}" style="display:none; color:var(--accent2); font-size:0.78rem; margin-top:0.5rem">
-              <span class="spinner"></span> Querying AttriSense AI engine to analyze parameters and synthesize localized prevention playbook...
+              <span class="spinner"></span> Running Google ADK Orchestrator & sub-agents to synthesize personalized prevention playbook...
             </div>
-            <div id="${reportBoxId}" class="agent-report-box" style="display:none; margin-top:0.5rem; max-height: 300px; overflow-y: auto;"></div>
+            <div id="${reportBoxId}" class="agent-report-box" style="display:none; margin-top:0.5rem; max-height: 250px; overflow-y: auto;"></div>
           </div>`;
       }
 
