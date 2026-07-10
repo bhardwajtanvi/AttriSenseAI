@@ -385,30 +385,21 @@
     <div style="text-align:left;margin-bottom:1.5rem;">
       <label class="flabel" style="margin-bottom:0.6rem">Select Corporate Persona to Proceed:</label>
       
+      <!-- MANAGER -->
+      <div onclick="loginAs('Line Manager User', 'MANAGER', 'Engineering', '')" class="persona-btn">
+        <span class="persona-avatar">👨‍💻</span>
+        <div>
+          <div class="persona-name">Line Manager Portal</div>
+          <div class="persona-role">Line Managers, Tech Leads & Team Leads</div>
+        </div>
+      </div>
+      
       <!-- HR ADMIN -->
       <div onclick="loginAs('HR Department User', 'HR_ADMIN', 'HR', '')" class="persona-btn">
         <span class="persona-avatar">👩‍💼</span>
         <div>
           <div class="persona-name">HR Department Portal</div>
-          <div class="persona-role">HR Admins, HR Business Partners & HR Operations</div>
-        </div>
-      </div>
-      
-      <!-- ANALYST -->
-      <div onclick="loginAs('People Analytics User', 'ANALYST', 'Data Science', '')" class="persona-btn">
-        <span class="persona-avatar">📊</span>
-        <div>
-          <div class="persona-name">Attrition Analytics Portal</div>
-          <div class="persona-role">Data Scientists, People Analysts & Risk Advisors</div>
-        </div>
-      </div>
-      
-      <!-- MANAGER -->
-      <div onclick="loginAs('Line Manager User', 'MANAGER', 'Engineering', '')" class="persona-btn">
-        <span class="persona-avatar">👨‍💻</span>
-        <div>
-          <div class="persona-name">Line Manager & Lead Portal</div>
-          <div class="persona-role">Engineering Leads, Project Managers & Line Managers</div>
+          <div class="persona-role">HR Operations, HRBPs & HR Directors</div>
         </div>
       </div>
     </div>
@@ -1043,24 +1034,32 @@ function applyRolePermissions() {
   document.getElementById("aggregateChartsSection").style.display = "grid";
   document.getElementById("tableTitleText").textContent = "👤 Employee Attrition Risk Register";
   
+  // Profile elements checks
+  const profileEditBtn = document.getElementById("profileEditBtn");
+  const profileInterventionBox = document.getElementById("profileInterventionBox");
+  
   if (role === "HR_ADMIN") {
-    // HR Director sees all
-  } else if (role === "ANALYST") {
+    // HR Admin: ONLY gets notifications, read-only dashboard access (no edits/adds)
     managersTab.style.display = "none";
     fabBtn.style.display = "none";
+    document.getElementById("aggregateChartsSection").style.display = "grid";
+    if (profileEditBtn) profileEditBtn.style.display = "none";
+    if (profileInterventionBox) profileInterventionBox.style.display = "none";
+    switchTab('notifications'); // Route HR directly to Notification center on login
   } else if (role === "MANAGER") {
+    // Manager: Can fill all 15 sections, has full edit & charts access
     managersTab.style.display = "none";
-    fabBtn.style.display = "none";
-    document.getElementById("aggregateChartsSection").style.display = "none"; // Hide aggregate metrics from managers
-    const displayMgrName = window.currentUser.name === "Line Manager User" ? "Engineering Lead" : window.currentUser.name;
-    document.getElementById("tableTitleText").textContent = `👤 Attrition Risk Telemetry — Reportees for ${displayMgrName}`;
+    fabBtn.style.display = "block";
+    document.getElementById("aggregateChartsSection").style.display = "grid";
+    if (profileEditBtn) profileEditBtn.style.display = "block";
+    if (profileInterventionBox) profileInterventionBox.style.display = "flex";
+    switchTab('analytics');     // Route Manager to main Analytics Dashboard on login
   } else if (role === "EMPLOYEE") {
     // Hide standard dashboards completely
     document.getElementById("dashboardWorkspace").style.display = "none";
     document.getElementById("employeeWorkspace").style.display = "block";
     fabBtn.style.display = "none";
     navTabs.style.display = "none";
-    
     loadEmployeeSelfService();
   }
   
@@ -1239,15 +1238,19 @@ function toggleExpand(emp, idx, row) {
             <button onclick="sendAlert('ALARM', '${emp.employee_id}', '${emp.name}', 'Manager', 'Critical flight risk warning sent. Schedule discussion.')" class="notif-btn">
               🚨 Escalate to Line Manager
             </button>
-            <button onclick="showManagerActionForm(${idx}, '${emp.employee_id}', '${emp.name}')" class="notif-btn">
+            \${window.currentUser.role !== 'HR_ADMIN' ? \`
+            <button onclick="showManagerActionForm(\${idx}, '\${emp.employee_id}', '\${emp.name}')" class="notif-btn">
               ✍️ Log Manager Intervention Notes
             </button>
+            \` : ''}
             <button onclick="viewEmployeeProfile('${emp.employee_id}')" class="notif-btn primary" style="margin-left:auto;">
               📋 View Profile Page
             </button>
-            <button onclick="openEditModal('${emp.employee_id}')" class="notif-btn" style="margin-left:0.5rem;">
+            \${window.currentUser.role !== 'HR_ADMIN' ? \`
+            <button onclick="openEditModal('\${emp.employee_id}')" class="notif-btn" style="margin-left:0.5rem;">
               ✏️ Edit Employee Metrics
             </button>
+            \` : ''}
           </div>
 
           <div id="mgrForm-${idx}" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
@@ -1321,26 +1324,27 @@ async function openEditModal(empId) {
       i.style.opacity = 1;
     });
 
-    // Reset grid components visibility
-    document.getElementById("editManagerScorecardGroup").style.display = "block";
-    document.getElementById("editMoodIndexGroup").style.display = "block";
+    document.getElementById("saveEditBtn").style.display = "inline-block";
 
-    if (role === "HR_ADMIN") {
-      // HR Admin: HR fields + Common metrics only
-      editAnalyst.style.display = "none";
-      editManager.style.display = "none";
-      editFeedback.style.display = "none";
-    } else if (role === "ANALYST") {
-      // Analyst: Analyst fields, Mood Index, Common metrics, Feedback notes (No HR fields, No Manager Scorecard)
-      editHr.style.display = "none";
+    if (role === "MANAGER") {
+      // Manager: Full edit of all 15 parameters
+      editHr.style.display = "flex";
+      editAnalyst.style.display = "flex";
       editManager.style.display = "flex";
-      document.getElementById("editManagerScorecardGroup").style.display = "none";
-    } else if (role === "MANAGER") {
-      // Manager: Mood Index, Manager Scorecard, Feedback notes only
-      editHr.style.display = "none";
-      editAnalyst.style.display = "none";
-      editCommon.style.display = "none";
+      editCommon.style.display = "flex";
+      editFeedback.style.display = "flex";
+    } else if (role === "HR_ADMIN") {
+      // HR Admin: Read-only access
+      editHr.style.display = "flex";
+      editAnalyst.style.display = "flex";
       editManager.style.display = "flex";
+      editCommon.style.display = "flex";
+      editFeedback.style.display = "flex";
+      
+      document.querySelectorAll("#editModal input, #editModal select, #editModal textarea").forEach(i => {
+        i.disabled = true;
+      });
+      document.getElementById("saveEditBtn").style.display = "none";
     }
   } catch(e) {
     alert("Error loading employee data: " + e.message);
@@ -1780,10 +1784,65 @@ async function runAgentAnalysis(empId, idx) {
     
     // Format the markdown response slightly
     box.innerHTML = formatMarkdownReport(data.report);
+
+    // If Manager, append Share button
+    if (window.currentUser.role === 'MANAGER') {
+      const shareBtnId = `shareBtn-${idx}`;
+      box.innerHTML += `
+        <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end;">
+          <button onclick="shareReportToHR('${empId}', '${shareBtnId}')" class="notif-btn primary" id="${shareBtnId}">
+            🔗 Share Analysis & Prevention Plan with HR
+          </button>
+        </div>
+      `;
+    }
   } catch (e) {
     loader.style.display = 'none';
     box.style.display = 'block';
     box.innerHTML = `<span style="color:var(--critical)">Error running agents: ${e.message}</span>`;
+  }
+}
+
+async function shareReportToHR(empId, btnId) {
+  const emp = allEmployees.find(e => e.employee_id === empId);
+  const empName = emp ? emp.name : "Employee";
+  const shareBtn = document.getElementById(btnId);
+  
+  if (shareBtn) {
+    shareBtn.disabled = true;
+    shareBtn.textContent = "Sharing...";
+  }
+
+  try {
+    const res = await fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'FORWARD',
+        sender: 'Line Manager (' + window.currentUser.name + ')',
+        recipient: 'HR Team',
+        employee_id: empId,
+        employee_name: empName,
+        message: `Line Manager shared Attrition Prevention Plan & Analysis Report.`,
+        notes: `AI Report Summary: Employee risk is assessed. Full 15-parameter breakdown and prevention playbook recommendations forwarded for final HR approval.`
+      })
+    });
+    if (res.status === 201) {
+      alert(`Attrition Prevention Plan shared with HR Team successfully!`);
+      if (shareBtn) {
+        shareBtn.textContent = "✓ Shared with HR";
+        shareBtn.style.background = "var(--low)";
+        shareBtn.style.borderColor = "var(--low)";
+      }
+      loadNotifications();
+    }
+  } catch (e) {
+    console.error("Error sharing report:", e);
+    alert("Network error: " + e.message);
+    if (shareBtn) {
+      shareBtn.disabled = false;
+      shareBtn.textContent = "🔗 Share Analysis & Prevention Plan with HR";
+    }
   }
 }
 
