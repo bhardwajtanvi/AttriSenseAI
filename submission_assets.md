@@ -13,3 +13,10 @@ Use this high-impact banner as the header for your Devpost project profile, GitH
 ## 2. Multi-Agent Workflow Diagram
 Use this diagram in the project documentation or architecture slides to demonstrate the flow of telemetry signals through the Google ADK and Gemini 2.5 Flash orchestration brain to HR, Analyst, and Manager roles.
 ![AttriSense AI Multi-Agent Workflow Diagram](assets/workflow_diagram.png)
+
+---
+
+## 3. Official Platform Logo
+The official logo for AttriSense AI. Fits perfectly as a profile picture, dashboard icon, or presentation header.
+![AttriSense AI Official Logo](assets/attrisense_logo.png)
+
