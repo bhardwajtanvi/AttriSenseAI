@@ -1228,22 +1228,19 @@ function toggleExpand(emp, idx, row) {
             <button onclick="sendAlert('FORWARD', '${emp.employee_id}', '${emp.name}', 'HR Team', 'Forwarding employee metrics file to HR for urgent retention discussion.')" class="notif-btn">
               📨 Forward File to HR
             </button>
-            <button onclick="sendAlert('ALARM', '${emp.employee_id}', '${emp.name}', 'Manager', 'Critical flight risk warning sent. Schedule discussion.')" class="notif-btn">
-              🚨 Escalate to Line Manager
-            </button>
-            \${window.currentUser.role !== 'HR_ADMIN' ? \`
-            <button onclick="showManagerActionForm(\${idx}, '\${emp.employee_id}', '\${emp.name}')" class="notif-btn">
+            ${window.currentUser.role !== 'HR_ADMIN' ? `
+            <button onclick="showManagerActionForm(${idx}, '${emp.employee_id}', '${emp.name}')" class="notif-btn">
               ✍️ Log Manager Intervention Notes
             </button>
-            \` : ''}
+            ` : ''}
             <button onclick="viewEmployeeProfile('${emp.employee_id}')" class="notif-btn primary" style="margin-left:auto;">
               📋 View Profile Page
             </button>
-            \${window.currentUser.role !== 'HR_ADMIN' ? \`
-            <button onclick="openEditModal('\${emp.employee_id}')" class="notif-btn" style="margin-left:0.5rem;">
+            ${window.currentUser.role !== 'HR_ADMIN' ? `
+            <button onclick="openEditModal('${emp.employee_id}')" class="notif-btn" style="margin-left:0.5rem;">
               ✏️ Edit Employee Metrics
             </button>
-            \` : ''}
+            ` : ''}
           </div>
 
           <div id="mgrForm-${idx}" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
@@ -1693,14 +1690,15 @@ async function submitEmpAction() {
 
 // WORKFLOW / COLLABORATION INTERACTIONS
 async function sendAlert(type, empId, name, recipient, message) {
-  const notes = type === 'FORWARD' ? 'Analyst review notes: parameters breached threshold.' : 'System warning auto-escalated.';
+  const senderName = window.currentUser.role === 'MANAGER' ? `Manager (${window.currentUser.name})` : `HR Team (${window.currentUser.name})`;
+  const notes = type === 'FORWARD' ? 'Employee metrics file shared by Line Manager with HR.' : 'Action escalation logged by HR.';
   try {
     const res = await fetch('/api/notifications', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type,
-        sender: type === 'FORWARD' ? 'Analyst (Risk Control)' : 'HR Operations',
+        sender: senderName,
         recipient,
         employee_id: empId,
         employee_name: name,
@@ -1839,20 +1837,24 @@ async function shareReportToHR(empId, btnId) {
   }
 }
 
-async function hrGeneratePlan(empId, empName, btnId, reportBoxId, loaderId) {
+async function hrGenerateSpecificPlan(empId, empName, planType, btnId, reportBoxId, loaderId) {
   const btn = document.getElementById(btnId);
   const loader = document.getElementById(loaderId);
   const box = document.getElementById(reportBoxId);
   
-  if (btn) btn.disabled = true;
   if (loader) loader.style.display = 'block';
   if (box) box.style.display = 'none';
+
+  const rootActionsDiv = btn ? btn.closest('.notif-actions') : null;
+  if (rootActionsDiv) {
+    rootActionsDiv.querySelectorAll('button').forEach(b => b.disabled = true);
+  }
 
   try {
     const res = await fetch(`/api/employee/${empId}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role: 'HR_ADMIN' })
+      body: JSON.stringify({ role: 'HR_ADMIN', plan_type: planType })
     });
     const data = await res.json();
     
@@ -1872,13 +1874,15 @@ async function hrGeneratePlan(empId, empName, btnId, reportBoxId, loaderId) {
         recipient: 'Tarun Gupta',
         employee_id: empId,
         employee_name: empName,
-        message: `HR generated Attrition Prevention Plan for ${empName}.`,
-        notes: `AI Playbook: Personalized retention action generated. Direct guidelines and mitigations logged for Line Manager execution.`
+        message: planType === 'MANAGER_coaching' 
+          ? `HR generated Manager 1-on-1 Action Plan for ${empName}.` 
+          : `HR generated HR Direct Action Plan (Salary/Pulse) for ${empName}.`,
+        notes: data.report
       })
     });
     
     if (btn) {
-      btn.textContent = "✓ Plan Generated & Shared with Manager";
+      btn.textContent = "✓ Plan Generated & Shared";
       btn.style.background = "var(--low)";
       btn.style.borderColor = "var(--low)";
     }
@@ -1890,7 +1894,9 @@ async function hrGeneratePlan(empId, empName, btnId, reportBoxId, loaderId) {
       box.style.display = 'block';
       box.innerHTML = `<span style="color:var(--critical)">Error generating plan: ${e.message}</span>`;
     }
-    if (btn) btn.disabled = false;
+    if (rootActionsDiv) {
+      rootActionsDiv.querySelectorAll('button').forEach(b => b.disabled = false);
+    }
   }
 }
 
@@ -2186,23 +2192,25 @@ async function loadNotifications() {
             </button>
           </div>`;
       } else if (role === 'HR_ADMIN' && n.type === 'FORWARD') {
-        const genBtnId = `hrGenBtn-${n.employee_id}`;
+        const mgrPlanBtnId = `mgrPlanBtn-${n.employee_id}`;
+        const hrPlanBtnId = `hrPlanBtn-${n.employee_id}`;
         const reportBoxId = `hrReportBox-${n.employee_id}`;
         const loaderId = `hrLoader-${n.employee_id}`;
         actionsBlock = `
           <div class="notif-actions" style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem; width:100%">
-            <div style="display:flex; gap:0.5rem">
-              <button onclick="hrGeneratePlan('${n.employee_id}', '${n.employee_name}', '${genBtnId}', '${reportBoxId}', '${loaderId}')" id="${genBtnId}" class="notif-btn primary" style="background:var(--accent); border-color:var(--accent)">
-                ⚡ Generate Attrition Prevention Plan (AI)
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.25rem;">🔎 Real-Time Prevention Actions based on Manager's Shared File:</div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap">
+              <button onclick="hrGenerateSpecificPlan('${n.employee_id}', '${n.employee_name}', 'MANAGER_coaching', '${mgrPlanBtnId}', '${reportBoxId}', '${loaderId}')" id="${mgrPlanBtnId}" class="notif-btn primary" style="background:var(--accent); border-color:var(--accent)">
+                👨‍💻 Generate Manager 1-on-1 Plan (AI)
               </button>
-              <button onclick="sendAlert('ALARM', '${n.employee_id}', '${n.employee_name}', 'Tarun Gupta', 'HR escalated critical turnover warning. Action required immediately.')" class="notif-btn">
-                🚨 Notify Line Manager
+              <button onclick="hrGenerateSpecificPlan('${n.employee_id}', '${n.employee_name}', 'HR_compensation', '${hrPlanBtnId}', '${reportBoxId}', '${loaderId}')" id="${hrPlanBtnId}" class="notif-btn primary" style="background:var(--accent2); border-color:var(--accent2); color:#fff">
+                👩‍💼 Generate HR Direct Plan (AI)
               </button>
             </div>
             <div id="${loaderId}" style="display:none; color:var(--accent2); font-size:0.78rem; margin-top:0.5rem">
-              <span class="spinner"></span> Running Google ADK Orchestrator & sub-agents to synthesize personalized prevention playbook...
+              <span class="spinner"></span> Querying AttriSense AI engine to analyze parameters and synthesize localized prevention playbook...
             </div>
-            <div id="${reportBoxId}" class="agent-report-box" style="display:none; margin-top:0.5rem; max-height: 250px; overflow-y: auto;"></div>
+            <div id="${reportBoxId}" class="agent-report-box" style="display:none; margin-top:0.5rem; max-height: 300px; overflow-y: auto;"></div>
           </div>`;
       }
 

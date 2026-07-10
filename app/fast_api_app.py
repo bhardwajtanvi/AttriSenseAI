@@ -32,44 +32,7 @@ app.add_middleware(
 # ─────────────────────────────────────────────────────────────────────────────
 # NOTIFICATION SYSTEM STATE
 # ─────────────────────────────────────────────────────────────────────────────
-NOTIFICATIONS = [
-    {
-        "id": 1,
-        "type": "ALARM",
-        "sender": "System Monitor",
-        "recipient": "Analyst",
-        "employee_id": "EMP0375",
-        "employee_name": "Ashish Wagh",
-        "message": "Employee EMP0375 risk score reached 86.1% (CRITICAL threshold breached).",
-        "timestamp": "2026-07-09T10:15:30Z",
-        "status": "UNREAD",
-        "notes": ""
-    },
-    {
-        "id": 2,
-        "type": "ALARM",
-        "sender": "System Monitor",
-        "recipient": "Analyst",
-        "employee_id": "EMP0783",
-        "employee_name": "Bhavesh Fernandez",
-        "message": "Employee EMP0783 risk score reached 86.0% (CRITICAL threshold breached).",
-        "timestamp": "2026-07-09T11:04:12Z",
-        "status": "READ",
-        "notes": "Forwarded to HR with review notes."
-    },
-    {
-        "id": 3,
-        "type": "FORWARD",
-        "sender": "Analyst (Risk Control)",
-        "recipient": "HR Team",
-        "employee_id": "EMP0783",
-        "employee_name": "Bhavesh Fernandez",
-        "message": "Risk alert forwarded for review. Compensation is below 30th percentile despite high performance.",
-        "timestamp": "2026-07-09T11:05:00Z",
-        "status": "UNREAD",
-        "notes": "Waiting for HR discussion with Manager."
-    }
-]
+NOTIFICATIONS = []
 
 # ─────────────────────────────────────────────────────────────────────────────
 # REST API ENDPOINTS
