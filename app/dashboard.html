@@ -2176,10 +2176,11 @@ async function loadDashboard() {
     allEmployees = await empRes.json();
     const depts = await deptRes.json();
 
-    // Filter employees on load if Manager
+    // Filter employees on load if Manager (map Line Manager User to Tarun Gupta reportees)
     let viewEmployees = allEmployees;
     if (window.currentUser.role === "MANAGER") {
-      viewEmployees = allEmployees.filter(e => e.manager.includes(window.currentUser.name));
+      const filterMgrName = window.currentUser.name === "Line Manager User" ? "Tarun Gupta" : window.currentUser.name;
+      viewEmployees = allEmployees.filter(e => e.manager.includes(filterMgrName));
     }
 
     // KPIs based on user's view
