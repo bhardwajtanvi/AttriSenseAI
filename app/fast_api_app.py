@@ -280,8 +280,7 @@ async def create_notification(request: Request):
     eid = new_notif["employee_id"]
     if eid and eid in EMPLOYEES:
         if new_notif["type"] == "MANAGER_ACTION":
-            prev = EMPLOYEES[eid].get("feedback", "")
-            EMPLOYEES[eid]["feedback"] = f"Manager Action Taken ({new_notif['sender']}): {new_notif['message']}. Details: {new_notif['notes']}. Previous: {prev}"
+            EMPLOYEES[eid]["feedback"] = f"{new_notif['message']}"
         elif new_notif["type"] == "FORWARD" and new_notif["notes"]:
             for n in NOTIFICATIONS:
                 if n["employee_id"] == eid and n["type"] == "ALARM":

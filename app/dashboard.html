@@ -1197,9 +1197,6 @@ function toggleExpand(emp, idx, row) {
   expRow.innerHTML = `
     <td colspan="8">
       <div style="padding:0.5rem 0">
-        <div style="font-size:0.78rem;color:var(--muted);font-style:italic;margin-bottom:0.75rem;padding:0.6rem 0.75rem;background:rgba(255,255,255,0.02);border-radius:8px;border-left:3px solid rgba(99,102,241,0.4)">
-          💬 Feedback response: "${emp.feedback}"
-        </div>
         <div class="exp-grid">
           <div class="exp-item"><div class="exp-label">Employee ID</div><div class="exp-val" style="color:var(--accent2)">${emp.employee_id}</div></div>
           <div class="exp-item"><div class="exp-label">Manager</div><div class="exp-val">${emp.manager || 'None'}</div></div>
