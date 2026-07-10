@@ -411,55 +411,6 @@
           <div class="persona-role">Engineering Leads, Project Managers & Line Managers</div>
         </div>
       </div>
-      
-      <!-- EMPLOYEE -->
-      <div class="persona-btn" id="employeePersonaOption" style="flex-direction:column;align-items:stretch;cursor:default;">
-        <div style="display:flex;align-items:center;width:100%;cursor:pointer;" onclick="toggleEmployeeList(event)">
-          <span class="persona-avatar">💻</span>
-          <div style="flex-grow:1;">
-            <div class="persona-name">Employee Career Portal</div>
-            <div class="persona-role">Individual Employee Self-Service Cockpit</div>
-          </div>
-          <span id="empListChevron" style="font-size:0.8rem;color:var(--muted);transition:transform 0.2s;margin-left:0.5rem;">▼</span>
-        </div>
-        <div id="employeeSelectGrid" style="display:none;flex-direction:column;gap:0.4rem;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid rgba(255,255,255,0.06);text-align:left;">
-          <style>
-            .sub-persona-row {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              padding: 0.45rem 0.65rem;
-              background: rgba(255,255,255,0.03);
-              border: 1px solid rgba(255,255,255,0.04);
-              border-radius: 6px;
-              font-size: 0.78rem;
-              color: #94a3b8;
-              cursor: pointer;
-              transition: all 0.2s ease;
-            }
-            .sub-persona-row:hover {
-              background: rgba(99,102,241,0.12) !important;
-              color: #fff !important;
-              border-color: rgba(99,102,241,0.3) !important;
-            }
-          </style>
-          <div onclick="loginAs('Arjun Sharma', 'EMPLOYEE', 'Engineering', 'EMP0001')" class="sub-persona-row">
-            <span>Arjun Sharma (EMP0001)</span> <span class="badge badge-CRITICAL" style="font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:4px;">CRITICAL</span>
-          </div>
-          <div onclick="loginAs('Monika Arora', 'EMPLOYEE', 'Engineering', 'EMP0002')" class="sub-persona-row">
-            <span>Monika Arora (EMP0002)</span> <span class="badge badge-HIGH" style="font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:4px;">HIGH</span>
-          </div>
-          <div onclick="loginAs('Aarav Nair', 'EMPLOYEE', 'Product', 'EMP0003')" class="sub-persona-row">
-            <span>Aarav Nair (EMP0003)</span> <span class="badge badge-MODERATE" style="font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:4px;">MODERATE</span>
-          </div>
-          <div onclick="loginAs('Aditya Joshi', 'EMPLOYEE', 'Sales', 'EMP0004')" class="sub-persona-row">
-            <span>Aditya Joshi (EMP0004)</span> <span class="badge badge-LOW" style="font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:4px;">LOW</span>
-          </div>
-          <div onclick="loginAs('Amrita Sen', 'EMPLOYEE', 'Finance', 'EMP0005')" class="sub-persona-row">
-            <span>Amrita Sen (EMP0005)</span> <span class="badge badge-LOW" style="font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:4px;">LOW</span>
-          </div>
-        </div>
-      </div>
     </div>
     
     <div style="font-size:0.68rem;color:var(--muted)">LTTS Global Hackathon 2026 Sandbox Login</div>
